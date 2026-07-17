@@ -1,0 +1,6 @@
+# Keep repository text files consistent across Windows, Linux, and Docker.
+* text=auto eol=lf
+
+# Keep native Windows command files in Windows format.
+*.bat text eol=crlf
+*.cmd text eol=crlf
