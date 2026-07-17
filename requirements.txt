@@ -1,0 +1,30 @@
+# Direct project dependencies for the planned system.
+# We will generate a tested lock file after the first complete installation.
+
+# API and configuration
+fastapi
+uvicorn[standard]
+python-multipart
+pydantic-settings
+python-dotenv
+
+# RAG and agent orchestration
+langchain
+langchain-community
+langchain-text-splitters
+langgraph
+
+# Document ingestion and retrieval
+pypdf
+pymupdf
+chromadb
+sentence-transformers
+
+# Interface and application communication
+streamlit
+requests
+
+# Evaluation and development
+pytest
+ruff
+

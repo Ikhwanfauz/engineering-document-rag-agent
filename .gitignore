@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Environments and secrets
+.env
+.venv/
+venv/
+
+# IDE and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# User documents and generated data
+data/manuals/*
+!data/manuals/README.md
+data/processed/*
+!data/processed/README.md
+data/vector_store/*
+!data/vector_store/README.md
+
+# Runtime output
+results/evaluations/*
+!results/evaluations/README.md
+results/logs/*
+!results/logs/README.md
+database/*.db
+database/*.db-*
+
+# Build and coverage
+build/
+dist/
+.coverage
+htmlcov/
+
