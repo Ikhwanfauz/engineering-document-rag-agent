@@ -89,3 +89,87 @@ python -m pytest
 - No RAG or agent code has been implemented yet.
 - The next checkpoint is **Version 1A - PDF ingestion and page-level metadata extraction**.
 - Before Version 1A evaluation, we still need to select a suitable public engineering manual or SOP.
+
+## VERSION 1A - PDF INGESTION AND PAGE-LEVEL METADATA ✅
+
+### What we did
+
+- Selected the official Universal Robots e-Series Service Manual as the first engineering document.
+- Kept the copyrighted manual local inside `data/manuals/` and confirmed that Git ignores it.
+- Inspected the manual before implementation instead of assuming that text extraction would work.
+- Replaced the placeholder in `src/document_loader.py` with a page-aware PDF loader.
+- Added `PDFPage` and `LoadedPDF` data models for predictable extraction output.
+- Preserved the source filename, one-based physical page number, and embedded PDF page label for later citations.
+- Added document metadata, text-page counts, empty-page detection, and total-character statistics.
+- Added clear errors for missing files, wrong extensions, corrupt PDFs, empty PDFs, and password-protected PDFs.
+- Added `scripts/inspect_pdf.py` for repeatable command-line inspection.
+- Added `tests/test_document_loader.py` with valid, empty-page, wrong-extension, missing-file, and corrupt-file cases.
+- Tested the loader against the complete 126-page UR service manual.
+
+### Why we did it
+
+- RAG answers cannot provide trustworthy page citations if source and page metadata are lost during ingestion.
+- We needed to know whether the development manual was digital text or an image-only scan before designing OCR behavior.
+- A separate inspection command gives us measurable evidence before chunking, embeddings, or LLM generation are introduced.
+
+### Important files
+
+- `src/document_loader.py` - validates PDFs and returns ordered page-aware text
+- `scripts/inspect_pdf.py` - reports extraction coverage, metadata, statistics, and page samples
+- `tests/test_document_loader.py` - automated loader and failure tests
+- `docs/pdf_ingestion.md` - Version 1A design, results, validation, and limitations
+- `data/manuals/e-Series_Service_Manual_en.pdf` - local ignored development document
+
+### Important commands and results
+
+```bash
+python -m pytest -q
+# 5 passed in 0.34s
+
+python -m ruff check src scripts tests
+# All checks passed!
+
+python -m scripts.inspect_pdf "data/manuals/e-Series_Service_Manual_en.pdf" --sample-page 10
+```
+
+- File size: `23,243,459` bytes
+- PDF format: `PDF 1.4`
+- Pages: `126`
+- Pages with text: `126`
+- Empty or image-only pages: `0`
+- Total extracted characters: `349,749`
+- Average characters per page: `2,775.8`
+- Median characters per page: `3,300.0`
+- Embedded author: `UR`
+- Embedded title: not provided
+- Encrypted: no
+
+### Problem faced
+
+- The first Git patch failed its safety check even though `src/document_loader.py` looked unchanged.
+- Byte inspection showed that the real placeholder ended with two newline bytes (`\n\n`), while the first patch was built against one newline.
+- The full-project Ruff format check reported 11 older placeholder files that would be reformatted.
+- Page 10 contained duplicated headings and vertically split copyright/footer text after extraction.
+
+### Solution
+
+- Did not force the failed patch or ignore the mismatch.
+- Inspected the exact file bytes, rebuilt the patch against the correct 83-byte placeholder, and validated it before applying.
+- Scoped the format check to the three Version 1A Python files so unrelated placeholders were not changed.
+- Recorded the layout noise as a Version 1B cleaning and chunking problem instead of hiding it inside the ingestion layer.
+
+### Important lesson
+
+- `git apply --check` is valuable because it prevents a patch from changing files when the expected base does not match exactly.
+- A PDF can be fully text-extractable while still containing headers, footers, rotated text, and reading-order noise.
+- Ingestion should preserve trustworthy page evidence; cleaning and chunking should be separate, testable steps.
+- Copyrighted development manuals can be used locally without publishing their bytes in the repository.
+
+### Current status
+
+- Version 1A page-aware PDF ingestion is implemented and locally validated.
+- All 126 pages of the UR service manual produced extractable text.
+- No OCR was needed for the primary development manual.
+- Source filename, physical page number, PDF page label, metadata, and empty-page status are preserved.
+- Version 1A has not added chunking, embeddings, retrieval, an LLM, or an agent yet.
+- The next checkpoint is **Version 1B - text cleaning, chunking, and document metadata**.

@@ -4,9 +4,9 @@ An AI assistant for engineering manuals and standard operating procedures (SOPs)
 
 ## Project status
 
-**Version 0 complete:** project planning, clean environment creation, dependency installation, folder structure, architecture decisions, roadmap, and local Windows validation all passed.
+**Version 1A complete:** page-aware PDF ingestion, metadata preservation, extraction diagnostics, and automated loader tests are implemented and validated locally.
 
-The retrieval and generation pipeline has not been implemented yet. Version 1A will begin PDF ingestion and page-level metadata extraction.
+The loader extracted all 126 pages and 349,749 characters from the Universal Robots e-Series Service Manual without OCR. Version 1B will clean repeated layout noise and create citation-safe chunks.
 
 ## Portfolio objective
 
@@ -93,8 +93,9 @@ engineering-document-rag-agent/
 - [Architecture](docs/architecture.md)
 - [Version roadmap](docs/version_roadmap.md)
 - [Decision log](docs/decision_log.md)
+- [PDF ingestion](docs/pdf_ingestion.md)
 - [Personal tracking](docs/personal_tracking.md)
 
 ## Current boundary
 
-Version 0 intentionally contains no fake RAG implementation. Each pipeline component will be added, tested, and documented checkpoint by checkpoint.
+Version 1A intentionally stops before text chunking, embeddings, retrieval, and generation. Each later pipeline component will be added, tested, and documented checkpoint by checkpoint.
