@@ -77,7 +77,6 @@ python -m pytest
 
 ### Current status
 
-### Current status
 
 - The project was extracted successfully to `C:\Users\ikhwa\engineering-document-rag-agent-v0\engineering-document-rag-agent`.
 - The `EngDocAI` Conda environment was created and activated successfully on Windows.
