@@ -4,9 +4,9 @@ An AI assistant for engineering manuals and standard operating procedures (SOPs)
 
 ## Project status
 
-**Version 0 in progress:** project planning, clean environment specification, folder structure, architecture decisions, roadmap, and structure validation are complete. Installation and validation inside the user's Windows `EngDocAI` environment are still pending.
+**Version 0 complete:** project planning, clean environment creation, dependency installation, folder structure, architecture decisions, roadmap, and local Windows validation all passed.
 
-The retrieval and generation pipeline has not been implemented yet. After the local environment check completes Version 0, Version 1A will begin PDF ingestion and page-level metadata extraction.
+The retrieval and generation pipeline has not been implemented yet. Version 1A will begin PDF ingestion and page-level metadata extraction.
 
 ## Portfolio objective
 
