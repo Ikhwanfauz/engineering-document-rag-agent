@@ -4,7 +4,7 @@ An AI assistant for engineering manuals and standard operating procedures (SOPs)
 
 ## Project status
 
-**Version 1A complete:** page-aware PDF ingestion, metadata preservation, extraction diagnostics, and automated loader tests are implemented and validated locally.
+**Version 1B complete:** page-aware PDF ingestion, conservative layout cleaning, stable document hashing, citation-safe chunking, and normalized JSON output are implemented and validated on the 126-page Universal Robots e-Series Service Manual. page-aware PDF ingestion, metadata preservation, extraction diagnostics, and automated loader tests are implemented and validated locally.
 
 The loader extracted all 126 pages and 349,749 characters from the Universal Robots e-Series Service Manual without OCR. Version 1B will clean repeated layout noise and create citation-safe chunks.
 
@@ -95,6 +95,7 @@ engineering-document-rag-agent/
 - [Decision log](docs/decision_log.md)
 - [PDF ingestion](docs/pdf_ingestion.md)
 - [Personal tracking](docs/personal_tracking.md)
+- [Cleaning and chunking](docs/chunking.md)
 
 ## Current boundary
 
