@@ -143,15 +143,16 @@ def test_processed_document_can_be_saved_as_json(tmp_path) -> None:
     assert saved_data["chunks"][0]["page_number"] == 1
     assert saved_data["chunks"][0]["source_name"] == "manual.pdf"
 
-    def test_embedded_copyright_noise_does_not_delete_body_text() -> None:
-        document = _make_document(
-            [
-                (
-                    "3. Remove the USB stick after completion.Copyright\n"
-                    "2009–2025 Disassembling Clamp Connection ©"
-                )
-            ]
-        )
+
+def test_embedded_copyright_noise_does_not_delete_body_text() -> None:
+    document = _make_document(
+        [
+            (
+                "3. Remove the USB stick after completion.Copyright\n"
+                "2009–2025 Disassembling Clamp Connection ©"
+            )
+        ]
+    )
 
     result = process_document(document)
     cleaned_text = result.pages[0].cleaned_text
