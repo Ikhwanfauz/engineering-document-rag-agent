@@ -189,6 +189,7 @@ def _copyright_block_positions(raw_lines: list[str]) -> set[int]:
 
     removable_positions: set[int] = set()
 
+    # First detect a clear Copyright or © marker near the page bottom.
     for rank, position in enumerate(nonempty_positions):
         normalized = _normalize_line(raw_lines[position]).casefold()
 
@@ -222,11 +223,79 @@ def _copyright_block_positions(raw_lines: list[str]) -> set[int]:
             removable_positions.add(next_position)
             next_rank += 1
 
+    # Some pages contain the vertical footer words without an attached
+    # Copyright marker. Detect only this exact unusual sequence.
+    footer_sequence = [
+        "reserved.",
+        "rights",
+        "all",
+        "a/s.",
+        "robots",
+        "universal",
+        "by",
+    ]
+    normalized_nonempty = [
+        _normalize_line(raw_lines[position]).casefold()
+        for position in nonempty_positions
+    ]
+    sequence_length = len(footer_sequence)
+
+    for start in range(len(normalized_nonempty) - sequence_length + 1):
+        end = start + sequence_length
+
+        if normalized_nonempty[start:end] != footer_sequence:
+            continue
+
+        for sequence_rank in range(start, end):
+            removable_positions.add(nonempty_positions[sequence_rank])
+
+        previous_rank = start - 1
+        while previous_rank >= 0:
+            previous_position = nonempty_positions[previous_rank]
+
+            if not _is_copyright_fragment(raw_lines[previous_position]):
+                break
+
+            removable_positions.add(previous_position)
+            previous_rank -= 1
+
+        next_rank = end
+        while next_rank < len(nonempty_positions):
+            next_position = nonempty_positions[next_rank]
+
+            if not _is_copyright_fragment(raw_lines[next_position]):
+                break
+
+            removable_positions.add(next_position)
+            next_rank += 1
+
+    known_footer_fragments = {
+        "reserved.",
+        "rights",
+        "all",
+        "a/s.",
+        "robots",
+        "universal",
+        "by",
+    }
+    detected_footer_fragments = {
+        _normalize_line(raw_lines[position]).casefold()
+        for position in nonempty_positions
+        if (_normalize_line(raw_lines[position]).casefold() in known_footer_fragments)
+    }
+
+    if len(detected_footer_fragments) >= 5:
+        for position in nonempty_positions:
+            if _is_copyright_fragment(raw_lines[position]):
+                removable_positions.add(position)
+
     return removable_positions
 
 
 def _strip_embedded_copyright_noise(
     raw_line: str,
+    *,
+    strip_vertical_fragments: bool = False,
 ) -> tuple[str, tuple[str, ...]]:
     """Strip attached copyright markers without deleting body text."""
     cleaned = _normalize_line(raw_line)
@@ -252,6 +321,31 @@ def _strip_embedded_copyright_noise(
         )
         if year_count:
             removed_fragments.append("copyright year range")
+
+    if strip_vertical_fragments:
+        fragment_patterns = (
+            ("reserved.", r"(?:^|\s+)reserved\.\s*$"),
+            ("rights", r"(?:^|\s+)rights\s*$"),
+            ("All", r"(?:^|\s+)all\s*$"),
+            ("A/S.", r"(?:^|\s+)a/s\.\s*$"),
+            ("Robots", r"(?:^|\s+)robots\s*$"),
+            ("Universal", r"(?:^|\s+)universal\s*$"),
+            ("by", r"(?:^|\s+)by\s*$"),
+            (
+                "copyright year range",
+                r"(?:^|\s+)\d{4}\s*[–-]\s*\d{4}\s*$",
+            ),
+        )
+
+        for fragment_name, pattern in fragment_patterns:
+            cleaned, fragment_count = re.subn(
+                pattern,
+                "",
+                cleaned,
+                flags=re.IGNORECASE,
+            )
+            if fragment_count:
+                removed_fragments.append(fragment_name)
 
     return _normalize_line(cleaned), tuple(removed_fragments)
 
@@ -382,7 +476,10 @@ def clean_page(
                 removed_lines.append(normalized)
             continue
 
-        cleaned_line, removed_fragments = _strip_embedded_copyright_noise(raw_line)
+        cleaned_line, removed_fragments = _strip_embedded_copyright_noise(
+            raw_line,
+            strip_vertical_fragments=bool(copyright_positions),
+        )
         kept_lines.append(cleaned_line)
         removed_lines.extend(removed_fragments)
 

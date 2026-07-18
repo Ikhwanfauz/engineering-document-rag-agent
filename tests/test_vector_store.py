@@ -5,7 +5,7 @@ from uuid import uuid4
 import chromadb
 
 from src.embedding_manager import EmbeddingConfig
-from src.text_chunker import process_document
+from src.text_chunker import ChunkingConfig, process_document
 from src.vector_store import VectorStoreConfig, VectorStoreManager
 
 from tests.test_text_chunker import _make_document
@@ -98,3 +98,37 @@ def test_reindexing_same_document_skips_existing_chunks() -> None:
     assert second_report.existing_chunks == 1
     assert second_report.collection_count == 1
     assert len(embedding_manager.embedded_batches) == first_embedding_calls
+
+
+def test_changed_chunking_replaces_stale_document_chunks() -> None:
+    embedding_manager = FakeEmbeddingManager()
+    store = _create_store(embedding_manager)
+    loaded_document = _make_document(["Clamp maintenance instruction. " * 20])
+
+    first_document = process_document(
+        loaded_document,
+        ChunkingConfig(
+            chunk_size=100,
+            chunk_overlap=20,
+            margin_line_count=0,
+        ),
+    )
+    updated_document = process_document(
+        loaded_document,
+        ChunkingConfig(
+            chunk_size=180,
+            chunk_overlap=30,
+            margin_line_count=0,
+        ),
+    )
+
+    first_report = store.index_document(first_document)
+    updated_report = store.index_document(updated_document)
+
+    assert first_document.document_id == updated_document.document_id
+    assert first_report.added_chunks == len(first_document.chunks)
+    assert updated_report.removed_chunks > 0
+    assert updated_report.collection_count == len(updated_document.chunks)
+    assert store.document_chunk_count(updated_document.document_id) == len(
+        updated_document.chunks
+    )

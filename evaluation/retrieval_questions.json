@@ -1,0 +1,40 @@
+[
+    {
+        "id": "clamp_joint_support",
+        "question": "How should the joint be supported when removing the clamp?",
+        "answerable": true,
+        "expected_pages": [
+            50
+        ]
+    },
+    {
+        "id": "esd_handling",
+        "question": "How should ESD-sensitive parts be handled?",
+        "answerable": true,
+        "expected_pages": [
+            13
+        ]
+    },
+    {
+        "id": "clamp_seals_and_rings",
+        "question": "Which seals and rings should be replaced when assembling a clamp connection?",
+        "answerable": true,
+        "expected_pages": [
+            51
+        ]
+    },
+    {
+        "id": "blue_lid_removal",
+        "question": "How is the blue lid removed before disassembling a clamp connection?",
+        "answerable": true,
+        "expected_pages": [
+            49
+        ]
+    },
+    {
+        "id": "unanswerable_capital",
+        "question": "What is the capital of Malaysia?",
+        "answerable": false,
+        "expected_pages": []
+    }
+]

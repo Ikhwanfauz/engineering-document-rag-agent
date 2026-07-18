@@ -42,3 +42,9 @@
 
 **Reason:** It is an image-based learning roadmap, not an engineering manual or SOP. A proper public technical document will provide better questions, citations, safety warnings, and evaluation examples.
 
+## D010 - Validate retrieval before adding an LLM
+
+**Decision:** Expose retrieved evidence, page citations, cosine distance, and similarity scores before implementing answer generation.
+
+**Reason:** Retrieval errors must be visible and measurable. Adding an LLM before validating evidence would hide retrieval weaknesses behind fluent generated answers.
+

@@ -109,6 +109,7 @@ def main() -> int:
     print(f"Processed chunks: {report.total_chunks}")
     print(f"New chunks indexed: {report.added_chunks}")
     print(f"Existing chunks skipped: {report.existing_chunks}")
+    print(f"Stale chunks removed: {report.removed_chunks}")
     print(f"Collection total: {report.collection_count}")
     print(f"Embedding model: {embedding_config.model_name}")
     print(f"Vector store: {vector_config.persist_directory}")

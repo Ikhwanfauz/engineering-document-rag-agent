@@ -164,6 +164,65 @@ def test_embedded_copyright_noise_does_not_delete_body_text() -> None:
     assert "2009–2025" not in cleaned_text
 
 
+def test_vertical_copyright_sequence_without_marker_is_removed() -> None:
+    document = _make_document(
+        [
+            (
+                "Remove the clamp screws.\n"
+                "reserved.\n"
+                "rights\n"
+                "All\n"
+                "A/S.\n"
+                "Robots\n"
+                "Universal\n"
+                "by\n"
+                "Support the joint during removal."
+            )
+        ]
+    )
+
+    result = process_document(document)
+    cleaned_text = result.pages[0].cleaned_text
+
+    assert "Remove the clamp screws." in cleaned_text
+    assert "Support the joint during removal." in cleaned_text
+    assert "reserved." not in cleaned_text
+    assert "Robots" not in cleaned_text
+    assert "Universal" not in cleaned_text
+
+
+def test_interleaved_vertical_footer_fragments_are_removed() -> None:
+    document = _make_document(
+        [
+            (
+                "Take ESD precautions.\n"
+                "reserved.\n"
+                "NOTICE rights\n"
+                "Hold the part by its edges. All\n"
+                "Do not touch any exposed pins. A/S.\n"
+                "Robots\n"
+                "Universal\n"
+                "by\n"
+                "2009–2025\n"
+                "©\n"
+                "Copyright"
+            )
+        ]
+    )
+
+    result = process_document(document)
+    cleaned_text = result.pages[0].cleaned_text
+
+    assert "Take ESD precautions." in cleaned_text
+    assert "NOTICE" in cleaned_text
+    assert "Hold the part by its edges." in cleaned_text
+    assert "Do not touch any exposed pins." in cleaned_text
+    assert "reserved." not in cleaned_text
+    assert "rights" not in cleaned_text
+    assert "A/S." not in cleaned_text
+    assert "Universal" not in cleaned_text
+
+
 @pytest.mark.parametrize(
     ("field_name", "field_value"),
     [

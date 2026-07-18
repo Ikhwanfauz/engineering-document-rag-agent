@@ -4,9 +4,11 @@ An AI assistant for engineering manuals and standard operating procedures (SOPs)
 
 ## Project status
 
-**Version 1B complete:** page-aware PDF ingestion, conservative layout cleaning, stable document hashing, citation-safe chunking, and normalized JSON output are implemented and validated on the 126-page Universal Robots e-Series Service Manual. page-aware PDF ingestion, metadata preservation, extraction diagnostics, and automated loader tests are implemented and validated locally.
+**Version 2B complete:** page-aware PDF ingestion, conservative layout cleaning, citation-safe chunking, local MiniLM embeddings, persistent ChromaDB indexing, stale-chunk synchronization, and citation-aware semantic retrieval are implemented and validated on the 126-page Universal Robots e-Series Service Manual.
 
-The loader extracted all 126 pages and 349,749 characters from the Universal Robots e-Series Service Manual without OCR. Version 1B will clean repeated layout noise and create citation-safe chunks.
+The initial retrieval baseline returned the correct physical page at rank 1 for all four answerable technical questions. An unrelated question produced a much lower similarity score, providing an initial baseline for later insufficient-evidence handling.
+
+The current automated test suite contains 34 passing tests.
 
 ## Portfolio objective
 
@@ -38,7 +40,7 @@ This project is designed to demonstrate more than a basic "chat with PDF" applic
 - PyPDF and PyMuPDF for document processing
 - Pytest for testing
 
-The LLM and embedding model will be selected and benchmarked in a later checkpoint. Keeping the provider configurable prevents the architecture from being tied to one model.
+The initial embedding baseline uses `sentence-transformers/all-MiniLM-L6-v2` with normalized vectors and cosine similarity. The LLM provider remains configurable and will be selected during grounded answer-generation development.
 
 ## Quick start
 
@@ -58,11 +60,11 @@ copy .env.example .env
 
 On macOS or Linux, use `cp .env.example .env` instead.
 
-Verify Version 0:
+Verify the current project:
 
 ```bash
-python scripts/check_setup.py
-python -m pytest
+python -m scripts.check_setup
+python -m pytest -q
 ```
 
 ## Project structure
@@ -96,7 +98,9 @@ engineering-document-rag-agent/
 - [PDF ingestion](docs/pdf_ingestion.md)
 - [Personal tracking](docs/personal_tracking.md)
 - [Cleaning and chunking](docs/chunking.md)
+- [Embeddings and ChromaDB indexing](docs/embedding_indexing.md)
+- [Semantic retrieval validation](docs/retrieval_validation.md)
 
 ## Current boundary
 
-Version 1A intentionally stops before text chunking, embeddings, retrieval, and generation. Each later pipeline component will be added, tested, and documented checkpoint by checkpoint.
+Version 2B intentionally stops before LLM answer generation. The current system retrieves ranked evidence with source filenames, physical-page citations, and similarity scores, but it does not yet generate answers or decide when evidence is insufficient.

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Literal, Sequence
+from typing import Any, Literal
 
 import chromadb
 
@@ -36,6 +36,7 @@ class IndexingReport:
     total_chunks: int
     added_chunks: int
     existing_chunks: int
+    removed_chunks: int
     collection_count: int
 
 
@@ -83,14 +84,11 @@ class VectorStoreManager:
             "embedding_model": (self.embedding_manager.config.model_name),
         }
 
-    def _existing_chunk_ids(
-        self,
-        chunk_ids: Sequence[str],
-    ) -> set[str]:
-        if not chunk_ids:
-            return set()
-
-        result = self.collection.get(ids=list(chunk_ids))
+    def _document_chunk_ids(self, document_id: str) -> set[str]:
+        """Return every stored chunk ID for one source document."""
+        result = self.collection.get(
+            where={"document_id": document_id},
+        )
         return set(result["ids"] or [])
 
     def index_document(
@@ -99,11 +97,16 @@ class VectorStoreManager:
         *,
         show_progress: bool = False,
     ) -> IndexingReport:
-        """Embed and index only chunks that are not already stored."""
+        """Synchronize one processed document with its stored chunks."""
         all_chunks = list(document.chunks)
-        all_chunk_ids = [chunk.chunk_id for chunk in all_chunks]
-        existing_ids = self._existing_chunk_ids(all_chunk_ids)
+        current_ids = {chunk.chunk_id for chunk in all_chunks}
+        stored_ids = self._document_chunk_ids(document.document_id)
 
+        stale_ids = stored_ids - current_ids
+        if stale_ids:
+            self.collection.delete(ids=list(stale_ids))
+
+        existing_ids = stored_ids & current_ids
         new_chunks = [
             chunk for chunk in all_chunks if chunk.chunk_id not in existing_ids
         ]
@@ -131,6 +134,7 @@ class VectorStoreManager:
             total_chunks=len(all_chunks),
             added_chunks=len(new_chunks),
             existing_chunks=len(existing_ids),
+            removed_chunks=len(stale_ids),
             collection_count=self.collection.count(),
         )
 
