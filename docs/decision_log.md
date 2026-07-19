@@ -48,3 +48,19 @@
 
 **Reason:** Retrieval errors must be visible and measurable. Adding an LLM before validating evidence would hide retrieval weaknesses behind fluent generated answers.
 
+
+### 2. Append to `docs/decision_log.md`
+
+```markdown
+## D011 - Use a configurable local Ollama provider
+
+**Decision:** Use Ollama through a replaceable LLM-provider interface. Keep the model configurable and use `qwen3:8b` as the preferred tested model for grounded engineering answers.
+
+**Reason:** Local generation supports privacy and reproducibility. Qwen followed procedural evidence more reliably than the initial `llama3.2` baseline, while the provider interface avoids coupling the pipeline to one model.
+
+## D012 - Stop prompt tuning at the grounded baseline
+
+**Decision:** Accept Version 3A once answers are grounded, citations are preserved, mandatory actions are protected, and known small-model limitations are documented.
+
+**Reason:** Additional prompt rules fixed individual questions but could cause over-compression or unrelated elaboration elsewhere. Exhaustive evidence coverage requires evaluation or a separate validation stage rather than endless question-specific prompt tuning.
+

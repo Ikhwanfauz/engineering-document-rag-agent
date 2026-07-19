@@ -247,3 +247,37 @@ def test_invalid_chunking_configuration_is_rejected(
 
     with pytest.raises(ValueError):
         ChunkingConfig(**values)
+
+
+def test_wide_layout_footer_fragments_are_removed_safely() -> None:
+    gap = " " * 17
+    document = _make_document(
+        [
+            (
+                "If handing the part to another person, ensure both are "
+                f"wearing{gap}Robots{gap}ESD wristband.\n"
+                "Figure showing another user.rights\n"
+                f"A/S.{gap}NOTICE\n"
+                "Extra care is needed during cold weather"
+                f"Robots{gap}and when heating is used.\n"
+                "Universal Robots provides robot systems.\n"
+                "Authorized users retain access rights."
+            )
+        ]
+    )
+
+    result = process_document(document)
+    cleaned_text = result.pages[0].cleaned_text
+
+    assert "wearing ESD wristband" in cleaned_text
+    assert "another user." in cleaned_text
+    assert "NOTICE" in cleaned_text
+    assert "cold weather and when heating" in cleaned_text
+
+    assert "Universal Robots provides robot systems." in cleaned_text
+    assert "Authorized users retain access rights." in cleaned_text
+
+    assert "user.rights" not in cleaned_text
+    assert "weatherRobots" not in cleaned_text
+    assert "Robots ESD wristband" not in cleaned_text
+    assert "A/S." not in cleaned_text

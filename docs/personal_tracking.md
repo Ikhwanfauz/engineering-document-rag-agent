@@ -173,3 +173,78 @@ python -m scripts.inspect_pdf "data/manuals/e-Series_Service_Manual_en.pdf" --sa
 - Source filename, physical page number, PDF page label, metadata, and empty-page status are preserved.
 - Version 1A has not added chunking, embeddings, retrieval, an LLM, or an agent yet.
 - The next checkpoint is **Version 1B - text cleaning, chunking, and document metadata**.
+
+
+## VERSION 1B - CLEANING AND CITATION-SAFE CHUNKING ✅
+
+### What we did
+
+- Changed back to the simple solo Git workflow: edit, test, commit, and push directly to `main`.
+- Merged the completed Version 1A feature branch into `main` using a local fast-forward merge.
+- Replaced the placeholder in `src/text_chunker.py` with the document-cleaning and chunking pipeline.
+- Created stable SHA-256 document IDs from extracted document content.
+- Added configurable chunk size, chunk overlap, margin inspection, and repeated-line thresholds.
+- Used a default chunk size of `1,000` characters with `150` characters of overlap.
+- Kept every chunk inside one physical PDF page.
+- Preserved the document ID, chunk ID, filename, physical page number, PDF page label, page-local chunk index, and chunk text.
+- Added repeated header/footer detection.
+- Protected safety words such as `WARNING`, `DANGER`, `CAUTION`, `SAFETY`, `IMPORTANT`, and `NOTE`.
+- Removed duplicated headings caused by PDF reading order.
+- Added conservative copyright/footer cleaning.
+- Added `scripts/process_pdf.py` to process the complete manual and save normalized JSON.
+- Saved generated processing output inside `data/processed/`, which remains ignored by Git.
+- Added automated cleaning, hashing, chunking, metadata, persistence, and error tests.
+- Added `docs/chunking.md`.
+
+### Why we did it
+
+- Embeddings work better with meaningful technical text than with page numbers, repeated headers, copyright words, and layout spacing.
+- Every retrieved chunk needs one reliable page citation.
+- Crossing a page boundary would make the source page ambiguous.
+- Stable document and chunk IDs are needed later for duplicate detection and persistent vector indexing.
+- Raw extraction and cleaned output needed to remain separate so cleaning behavior could be measured and debugged.
+
+### Important files
+
+- `src/text_chunker.py` - document hashing, cleaning, chunking, and JSON persistence
+- `scripts/process_pdf.py` - real-PDF processing and inspection command
+- `tests/test_text_chunker.py` - cleaning and chunking regression tests
+- `docs/chunking.md` - Version 1B design, metrics, and limitations
+- `data/processed/` - ignored generated JSON output
+
+### Important commands and results
+
+```bash
+python -m ruff format src/text_chunker.py tests/test_text_chunker.py scripts/process_pdf.py
+python -m ruff check src scripts tests
+python -m pytest -q
+python -m scripts.process_pdf "data/manuals/e-Series_Service_Manual_en.pdf" --sample-page 10
+
+
+```
+
+## VERSION 2A - EMBEDDINGS AND VECTOR STORAGE ✅
+
+- Added MiniLM embeddings and persistent ChromaDB storage.
+- Preserved source and page metadata in indexed chunks.
+- Added stable indexing, duplicate detection, and stale-chunk replacement.
+- Indexed the complete engineering service manual locally.
+
+## VERSION 2B - SEMANTIC RETRIEVAL VALIDATION ✅
+
+- Added top-k semantic retrieval with similarity scores.
+- Returned source filenames, physical pages, PDF labels, excerpts, and chunk IDs.
+- Validated answerable engineering questions against expected pages.
+- Kept retrieval visible before introducing LLM generation.
+
+## VERSION 3A - GROUNDED QUESTION ANSWERING ✅
+
+- Added configurable local Ollama generation.
+- Added the grounded RAG pipeline, citation manager, and `ask_manual.py` CLI.
+- Added mandatory-action validation and one automatic correction attempt.
+- Cleaned wide-layout PDF footer contamination and reindexed the manual.
+- Compared `llama3.2` with `qwen3:8b`; Qwen was the stronger tested model.
+- Validated real questions covering clamp removal, mandatory joint support, ESD handling, and seal replacement.
+- Reached 51 passing automated tests.
+- Documented that small local models may still omit or add details in broad multi-page answers.
+- Next checkpoint: Version 3B insufficient-evidence thresholds and controlled abstention.

@@ -13,6 +13,7 @@ langchain
 langchain-community
 langchain-text-splitters
 langgraph
+langchain-ollama
 
 # Document ingestion and retrieval
 pypdf

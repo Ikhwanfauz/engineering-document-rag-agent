@@ -292,14 +292,61 @@ def _copyright_block_positions(raw_lines: list[str]) -> set[int]:
     return removable_positions
 
 
+def _strip_wide_layout_footer_fragments(
+    raw_line: str,
+) -> tuple[str, tuple[str, ...]]:
+    """Remove verified footer words separated by unusually wide layout gaps."""
+    wide_gap = r"[ \t]{15,}"
+    known_fragments = (
+        r"reserved\."
+        r"|rights"
+        r"|all"
+        r"|a/s\."
+        r"|robots"
+        r"|universal"
+        r"|by"
+    )
+    removed_fragments: list[str] = []
+
+    def remove_standalone_fragment(match: re.Match[str]) -> str:
+        fragment = _normalize_line(match.group("fragment"))
+        removed_fragments.append(fragment)
+        return match.group("prefix")
+
+    cleaned = re.sub(
+        (
+            rf"(?P<prefix>^|{wide_gap})"
+            rf"(?P<fragment>{known_fragments})"
+            rf"(?={wide_gap}|$)"
+        ),
+        remove_standalone_fragment,
+        raw_line,
+        flags=re.IGNORECASE,
+    )
+
+    attached_patterns = (
+        ("rights", r"(?<=\.)rights(?=[ \t]*$)"),
+        ("Robots", rf"(?<=[a-z])Robots(?={wide_gap}|$)"),
+    )
+
+    for fragment_name, pattern in attached_patterns:
+        cleaned, count = re.subn(pattern, "", cleaned)
+
+        if count:
+            removed_fragments.extend([fragment_name] * count)
+
+    return cleaned, tuple(removed_fragments)
+
+
 def _strip_embedded_copyright_noise(
     raw_line: str,
     *,
     strip_vertical_fragments: bool = False,
 ) -> tuple[str, tuple[str, ...]]:
     """Strip attached copyright markers without deleting body text."""
-    cleaned = _normalize_line(raw_line)
-    removed_fragments: list[str] = []
+    layout_cleaned, layout_fragments = _strip_wide_layout_footer_fragments(raw_line)
+    cleaned = _normalize_line(layout_cleaned)
+    removed_fragments = list(layout_fragments)
 
     cleaned, copyright_count = re.subn(
         r"\s*copyright\s*$",

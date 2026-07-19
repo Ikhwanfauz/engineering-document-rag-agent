@@ -4,11 +4,15 @@ An AI assistant for engineering manuals and standard operating procedures (SOPs)
 
 ## Project status
 
-**Version 2B complete:** page-aware PDF ingestion, conservative layout cleaning, citation-safe chunking, local MiniLM embeddings, persistent ChromaDB indexing, stale-chunk synchronization, and citation-aware semantic retrieval are implemented and validated on the 126-page Universal Robots e-Series Service Manual.
+**Version 3A complete:** page-aware PDF ingestion, conservative layout cleaning, citation-safe chunking, local MiniLM embeddings, persistent ChromaDB indexing, stale-chunk synchronization, citation-aware semantic retrieval, and grounded local-LLM answer generation are implemented.
 
-The initial retrieval baseline returned the correct physical page at rank 1 for all four answerable technical questions. An unrelated question produced a much lower similarity score, providing an initial baseline for later insufficient-evidence handling.
+The system has been validated on the 126-page Universal Robots e-Series Service Manual. It retrieves ranked evidence, sends only that evidence to a configurable Ollama model, generates a grounded answer, and returns document, physical-page, PDF-label, and excerpt citations.
 
-The current automated test suite contains 34 passing tests.
+The initial retrieval baseline returned the correct physical page at rank 1 for all four answerable technical questions. Real answer-generation tests covered clamp disassembly, mandatory joint support, ESD-sensitive parts, and conditional seal and ring replacement.
+
+`llama3.2` established the initial local baseline. `qwen3:8b` followed procedural evidence more reliably and is the preferred tested model. Broad questions requiring exhaustive synthesis across multiple pages remain a documented small-model limitation.
+
+The current automated test suite contains 51 passing tests.
 
 ## Portfolio objective
 
@@ -27,24 +31,27 @@ This project is designed to demonstrate more than a basic "chat with PDF" applic
 - OCR fallback for scanned PDFs
 - FastAPI, Streamlit, SQLite, and Docker deployment
 
-## Planned stack
+## Technology stack
 
 - Python 3.11
 - LangChain for RAG orchestration
-- LangGraph for the later agent workflow
-- ChromaDB for local vector storage
+- LangGraph for the later maintenance-checklist workflow
+- Ollama for configurable local LLM generation
+- ChromaDB for persistent local vector storage
 - Sentence Transformers for local embeddings
 - FastAPI for the backend API
 - Streamlit for the user interface
 - SQLite for logs and feedback
 - PyPDF and PyMuPDF for document processing
-- Pytest for testing
+- Pytest for automated testing
 
-The initial embedding baseline uses `sentence-transformers/all-MiniLM-L6-v2` with normalized vectors and cosine similarity. The LLM provider remains configurable and will be selected during grounded answer-generation development.
+The embedding baseline uses `sentence-transformers/all-MiniLM-L6-v2` with normalized vectors and cosine similarity.
+
+The LLM provider remains configurable. `qwen3:8b` is the preferred tested model for grounded engineering answers, while `llama3.2` remains a smaller local baseline.
 
 ## Quick start
 
-Create a clean environment:
+Create and activate the Conda environment:
 
 ```bash
 conda env create -f environment.yml
@@ -58,13 +65,35 @@ Copy the environment template:
 copy .env.example .env
 ```
 
-On macOS or Linux, use `cp .env.example .env` instead.
+On macOS or Linux, use:
 
-Verify the current project:
+```bash
+cp .env.example .env
+```
+
+Install Ollama separately, then download the preferred model:
+
+```bash
+ollama pull qwen3:8b
+```
+
+Confirm that Ollama can run the model:
+
+```bash
+ollama run qwen3:8b "Reply with exactly: Qwen ready."
+```
+
+Verify the project:
 
 ```bash
 python -m scripts.check_setup
 python -m pytest -q
+```
+
+After indexing a manual, ask a grounded question:
+
+```bash
+python -m scripts.ask_manual "How should the joint be supported when removing the clamp?" --top-k 3 --llm-model qwen3:8b
 ```
 
 ## Project structure
@@ -100,7 +129,12 @@ engineering-document-rag-agent/
 - [Cleaning and chunking](docs/chunking.md)
 - [Embeddings and ChromaDB indexing](docs/embedding_indexing.md)
 - [Semantic retrieval validation](docs/retrieval_validation.md)
+- [Grounded question answering](docs/grounded_qa.md)
 
 ## Current boundary
 
-Version 2B intentionally stops before LLM answer generation. The current system retrieves ranked evidence with source filenames, physical-page citations, and similarity scores, but it does not yet generate answers or decide when evidence is insufficient.
+Version 3A generates grounded answers from retrieved evidence through a configurable local Ollama provider and returns document, page, and excerpt citations. It also validates mandatory-action wording and retries once when a model incorrectly softens a mandatory instruction.
+
+Version 3A does not guarantee exhaustive synthesis of every relevant precaution across broad multi-page evidence. This is recorded as a local-model limitation rather than hidden through additional question-specific prompt tuning.
+
+The next checkpoint is **Version 3B — Don't-know handling**, which will add similarity thresholds and controlled abstention when the uploaded documents do not provide sufficient evidence.
