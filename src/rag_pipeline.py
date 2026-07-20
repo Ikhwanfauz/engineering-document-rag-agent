@@ -34,6 +34,9 @@ Follow these rules:
 17. For broad questions, combine all distinct directly relevant requirements across the evidence; do not collapse or omit them merely to make the answer shorter.
 """.strip()
 
+DEFAULT_MINIMUM_SIMILARITY = 0.60
+INSUFFICIENT_EVIDENCE_ANSWER = "I don't know based on the uploaded documents."
+
 
 class EvidenceRetriever(Protocol):
     """Retrieval interface required by the RAG pipeline."""
@@ -64,6 +67,7 @@ class GroundedAnswer:
     answer: str
     citations: tuple[Citation, ...]
     evidence: tuple[RetrievedChunk, ...]
+    abstained: bool = False
 
 
 class RAGPipeline:
@@ -73,9 +77,15 @@ class RAGPipeline:
         self,
         retriever: EvidenceRetriever,
         llm_provider: LLMProvider,
+        *,
+        minimum_similarity: float = DEFAULT_MINIMUM_SIMILARITY,
     ) -> None:
+        if not 0.0 <= minimum_similarity <= 1.0:
+            raise ValueError("minimum_similarity must be between 0.0 and 1.0")
+
         self.retriever = retriever
         self.llm_provider = llm_provider
+        self.minimum_similarity = minimum_similarity
 
     def answer(
         self,
@@ -94,9 +104,19 @@ class RAGPipeline:
             document_id=document_id,
         )
 
+        evidence = tuple(
+            chunk
+            for chunk in evidence
+            if chunk.similarity_score >= self.minimum_similarity
+        )
+
         if not evidence:
-            raise NoRetrievedEvidenceError(
-                "No document evidence was retrieved for the question"
+            return GroundedAnswer(
+                question=question,
+                answer=INSUFFICIENT_EVIDENCE_ANSWER,
+                citations=(),
+                evidence=(),
+                abstained=True,
             )
 
         user_prompt = _build_user_prompt(question, evidence)

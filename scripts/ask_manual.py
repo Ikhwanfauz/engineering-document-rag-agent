@@ -9,8 +9,8 @@ from pathlib import Path
 from src.embedding_manager import EmbeddingConfig, EmbeddingManager
 from src.llm_provider import OllamaLLMProvider
 from src.rag_pipeline import (
+    DEFAULT_MINIMUM_SIMILARITY,
     GroundingValidationError,
-    NoRetrievedEvidenceError,
     RAGPipeline,
 )
 from src.retriever import DocumentRetriever
@@ -27,6 +27,12 @@ def build_parser() -> argparse.ArgumentParser:
         type=int,
         default=3,
         help="Maximum number of retrieved evidence chunks",
+    )
+    parser.add_argument(
+        "--minimum-similarity",
+        type=float,
+        default=DEFAULT_MINIMUM_SIMILARITY,
+        help="Minimum similarity required to use retrieved evidence",
     )
     parser.add_argument(
         "--persist-dir",
@@ -106,6 +112,7 @@ def main() -> int:
         pipeline = RAGPipeline(
             retriever=retriever,
             llm_provider=llm_provider,
+            minimum_similarity=args.minimum_similarity,
         )
 
         result = pipeline.answer(
@@ -113,11 +120,7 @@ def main() -> int:
             top_k=args.top_k,
             document_id=args.document_id,
         )
-    except (
-        ValueError,
-        NoRetrievedEvidenceError,
-        GroundingValidationError,
-    ) as exc:
+    except (ValueError, GroundingValidationError) as exc:
         parser.error(str(exc))
 
     elapsed_seconds = time.perf_counter() - started_at
@@ -125,7 +128,10 @@ def main() -> int:
     print("GROUNDED DOCUMENT ANSWER")
     print(f"Question: {result.question}")
     print(f"LLM model: {args.llm_model}")
-    print(f"Evidence chunks: {len(result.evidence)}")
+    print(f"LLM generation: {'skipped' if result.abstained else 'completed'}")
+    print(f"Status: {'ABSTAINED' if result.abstained else 'ANSWERED'}")
+    print(f"Minimum similarity: {args.minimum_similarity:.2f}")
+    print(f"Accepted evidence chunks: {len(result.evidence)}")
     print(f"Elapsed time: {elapsed_seconds:.2f} seconds")
 
     print()
@@ -134,18 +140,26 @@ def main() -> int:
 
     print()
     print("CITATIONS")
-    for number, citation in enumerate(result.citations, start=1):
-        print(f"[{number}] {citation.label}")
-        print(f"    PDF page label: {citation.page_label}")
-        print(f"    Excerpt: {citation.excerpt}")
+    if result.citations:
+        for number, citation in enumerate(result.citations, start=1):
+            print(f"[{number}] {citation.label}")
+            print(f"    PDF page label: {citation.page_label}")
+            print(f"    Excerpt: {citation.excerpt}")
+    else:
+        print("None — insufficient evidence.")
 
     print()
     print("RETRIEVAL DETAILS")
-    for rank, evidence in enumerate(result.evidence, start=1):
+    if result.evidence:
+        for rank, evidence in enumerate(result.evidence, start=1):
+            print(
+                f"Rank {rank}: {evidence.citation} | "
+                f"similarity={evidence.similarity_score:.4f} | "
+                f"chunk={evidence.chunk_id}"
+            )
+    else:
         print(
-            f"Rank {rank}: {evidence.citation} | "
-            f"similarity={evidence.similarity_score:.4f} | "
-            f"chunk={evidence.chunk_id}"
+            f"No evidence met the minimum similarity of {args.minimum_similarity:.2f}."
         )
 
     return 0

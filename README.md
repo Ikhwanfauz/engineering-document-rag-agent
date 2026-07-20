@@ -4,7 +4,9 @@ An AI assistant for engineering manuals and standard operating procedures (SOPs)
 
 ## Project status
 
-**Version 3A complete:** page-aware PDF ingestion, conservative layout cleaning, citation-safe chunking, local MiniLM embeddings, persistent ChromaDB indexing, stale-chunk synchronization, citation-aware semantic retrieval, and grounded local-LLM answer generation are implemented.
+**Version 3B complete:** page-aware PDF ingestion, conservative layout cleaning, citation-safe chunking, local MiniLM embeddings, persistent ChromaDB indexing, citation-aware semantic retrieval, grounded local-LLM generation, and controlled insufficient-evidence abstention are implemented.
+
+Retrieved chunks must meet the calibrated minimum similarity of `0.60`. When no evidence passes the threshold, the system returns `I don't know based on the uploaded documents.`, skips LLM generation, and produces no citations.
 
 The system has been validated on the 126-page Universal Robots e-Series Service Manual. It retrieves ranked evidence, sends only that evidence to a configurable Ollama model, generates a grounded answer, and returns document, physical-page, PDF-label, and excerpt citations.
 
@@ -12,7 +14,7 @@ The initial retrieval baseline returned the correct physical page at rank 1 for 
 
 `llama3.2` established the initial local baseline. `qwen3:8b` followed procedural evidence more reliably and is the preferred tested model. Broad questions requiring exhaustive synthesis across multiple pages remain a documented small-model limitation.
 
-The current automated test suite contains 51 passing tests.
+The current automated test suite contains 56 passing tests.
 
 ## Portfolio objective
 
@@ -130,11 +132,14 @@ engineering-document-rag-agent/
 - [Embeddings and ChromaDB indexing](docs/embedding_indexing.md)
 - [Semantic retrieval validation](docs/retrieval_validation.md)
 - [Grounded question answering](docs/grounded_qa.md)
+- [Don't-know handling](docs/dont_know_handling.md)
 
 ## Current boundary
 
-Version 3A generates grounded answers from retrieved evidence through a configurable local Ollama provider and returns document, page, and excerpt citations. It also validates mandatory-action wording and retries once when a model incorrectly softens a mandatory instruction.
+Version 3B prevents unsupported generation when retrieved evidence does not meet the calibrated minimum similarity of `0.60`. During abstention, the pipeline skips the LLM and returns no citations.
 
-Version 3A does not guarantee exhaustive synthesis of every relevant precaution across broad multi-page evidence. This is recorded as a local-model limitation rather than hidden through additional question-specific prompt tuning.
+Threshold calibration accepted 6 of 7 tested answerable questions and rejected all 6 tested unanswerable questions. The conservative threshold prioritizes preventing unsupported engineering answers, although a valid low-scoring paraphrase may receive an unnecessary abstention.
 
-The next checkpoint is **Version 3B — Don't-know handling**, which will add similarity thresholds and controlled abstention when the uploaded documents do not provide sufficient evidence.
+Version 3B does not solve the existing small-model limitation involving exhaustive synthesis across broad multi-page evidence.
+
+The next checkpoint is **Version 4A — FastAPI backend**, which will expose health, upload, indexing, question-answering, and document-management endpoints.

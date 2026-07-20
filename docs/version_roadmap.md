@@ -36,15 +36,14 @@
 * create initial retrieval questions
 * test whether expected pages are found
 
-## \## Version 3A - Grounded question answering ✅
+## Version 3A - Grounded question answering ✅
 
 * select a configurable LLM provider
 * generate answers from retrieved evidence only
 * return document name, page number, and excerpt
 * validate citation formatting
 
-## Version 3B - Don't-know handling
-
+## Version 3B - Don't-know handling ✅
 * define insufficient-evidence behavior
 * tune retrieval thresholds using examples
 * prevent unsupported answers

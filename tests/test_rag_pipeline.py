@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
+
 import pytest
 
 from src.rag_pipeline import (
+    DEFAULT_MINIMUM_SIMILARITY,
     GROUNDING_SYSTEM_PROMPT,
     GroundingValidationError,
-    NoRetrievedEvidenceError,
+    INSUFFICIENT_EVIDENCE_ANSWER,
     RAGPipeline,
 )
 from src.retriever import RetrievedChunk
@@ -92,18 +95,96 @@ def test_pipeline_returns_grounded_answer_citations_and_evidence() -> None:
     assert "Support the joint while removing" in (llm_provider.user_prompt or "")
 
 
-def test_pipeline_does_not_call_llm_without_evidence() -> None:
+def test_pipeline_abstains_without_evidence_and_does_not_call_llm() -> None:
     llm_provider = FakeLLMProvider()
     pipeline = RAGPipeline(FakeRetriever(()), llm_provider)
 
-    with pytest.raises(
-        NoRetrievedEvidenceError,
-        match="No document evidence",
-    ):
-        pipeline.answer("How should the joint be supported?")
+    result = pipeline.answer("How should the joint be supported?")
 
+    assert result.answer == INSUFFICIENT_EVIDENCE_ANSWER
+    assert result.abstained is True
+    assert result.evidence == ()
+    assert result.citations == ()
     assert llm_provider.system_prompt is None
     assert llm_provider.user_prompt is None
+
+
+def test_pipeline_abstains_when_similarity_is_below_threshold() -> None:
+    weak_chunk = replace(
+        make_chunk(),
+        distance=0.45,
+        similarity_score=0.55,
+    )
+    llm_provider = FakeLLMProvider()
+    pipeline = RAGPipeline(
+        FakeRetriever((weak_chunk,)),
+        llm_provider,
+    )
+
+    result = pipeline.answer("What torque is required for car wheel nuts?")
+
+    assert result.answer == INSUFFICIENT_EVIDENCE_ANSWER
+    assert result.abstained is True
+    assert result.evidence == ()
+    assert result.citations == ()
+    assert llm_provider.system_prompt is None
+    assert llm_provider.user_prompt is None
+
+
+def test_pipeline_accepts_evidence_at_similarity_threshold() -> None:
+    boundary_chunk = replace(
+        make_chunk(),
+        distance=1.0 - DEFAULT_MINIMUM_SIMILARITY,
+        similarity_score=DEFAULT_MINIMUM_SIMILARITY,
+    )
+    pipeline = RAGPipeline(
+        FakeRetriever((boundary_chunk,)),
+        FakeLLMProvider(),
+    )
+
+    result = pipeline.answer("How should the joint be supported?")
+
+    assert result.abstained is False
+    assert result.evidence == (boundary_chunk,)
+
+
+def test_pipeline_removes_weak_chunks_before_generation() -> None:
+    strong_chunk = make_chunk()
+    weak_chunk = replace(
+        make_chunk(),
+        chunk_id="weak-chunk",
+        page_number=74,
+        page_label="74",
+        text="Unrelated car wheel torque values.",
+        distance=0.45,
+        similarity_score=0.55,
+    )
+    llm_provider = FakeLLMProvider()
+    pipeline = RAGPipeline(
+        FakeRetriever((strong_chunk, weak_chunk)),
+        llm_provider,
+    )
+
+    result = pipeline.answer("How should the joint be supported?")
+
+    assert result.abstained is False
+    assert result.evidence == (strong_chunk,)
+    assert "Unrelated car wheel torque values." not in (llm_provider.user_prompt or "")
+
+
+@pytest.mark.parametrize("minimum_similarity", [-0.01, 1.01])
+def test_invalid_minimum_similarity_is_rejected(
+    minimum_similarity: float,
+) -> None:
+    with pytest.raises(
+        ValueError,
+        match="minimum_similarity must be between",
+    ):
+        RAGPipeline(
+            FakeRetriever((make_chunk(),)),
+            FakeLLMProvider(),
+            minimum_similarity=minimum_similarity,
+        )
 
 
 @pytest.mark.parametrize("question", ["", "   "])
