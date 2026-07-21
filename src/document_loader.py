@@ -94,7 +94,10 @@ def load_pdf(path: str | Path) -> LoadedPDF:
     pdf_path = _validate_pdf_path(path)
 
     try:
-        document = pymupdf.open(pdf_path)
+        document = pymupdf.open(
+            stream=pdf_path.read_bytes(),
+            filetype="pdf",
+        )
     except (pymupdf.FileDataError, RuntimeError, ValueError) as exc:
         raise PDFIngestionError(f"Could not open PDF: {pdf_path.name}") from exc
 
