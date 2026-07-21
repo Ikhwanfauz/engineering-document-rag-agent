@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import time
 from pathlib import Path
 from typing import Annotated
 from uuid import uuid4
@@ -11,14 +12,22 @@ from fastapi import FastAPI, File, HTTPException, UploadFile, status
 from pydantic import BaseModel
 
 from src.document_loader import PDFIngestionError, load_pdf
+from src.embedding_manager import EmbeddingConfig, EmbeddingManager
+from src.text_chunker import ChunkingConfig, process_document
+from src.vector_store import VectorStoreConfig, VectorStoreManager
 
 UPLOAD_DIRECTORY = Path("data/manuals")
 MAX_UPLOAD_SIZE_BYTES = 25 * 1024 * 1024
 UPLOAD_CHUNK_SIZE = 1024 * 1024
+VECTOR_STORE_DIRECTORY = Path("data/vector_store")
+VECTOR_COLLECTION_NAME = "engineering_documents"
+EMBEDDING_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
+CHUNK_SIZE = 1000
+CHUNK_OVERLAP = 150
 
 app = FastAPI(
     title="Engineering Document RAG Agent API",
-    version="4A",
+    version="4B",
 )
 
 
@@ -32,12 +41,26 @@ class UploadedDocument(BaseModel):
     text_page_count: int
 
 
+class IndexedDocument(BaseModel):
+    """Summary returned after indexing an uploaded PDF."""
+
+    document_id: str
+    filename: str
+    page_count: int
+    total_chunks: int
+    added_chunks: int
+    existing_chunks: int
+    removed_chunks: int
+    collection_count: int
+    elapsed_seconds: float
+
+
 @app.get("/health", tags=["system"])
 def health_check() -> dict[str, str]:
     """Return the current API health status."""
     return {
         "status": "ok",
-        "version": "4A",
+        "version": "4B",
     }
 
 
@@ -139,4 +162,74 @@ async def upload_document(
         size_bytes=size_bytes,
         page_count=loaded_pdf.page_count,
         text_page_count=loaded_pdf.text_page_count,
+    )
+
+
+@app.post(
+    "/documents/{filename}/index",
+    response_model=IndexedDocument,
+    tags=["documents"],
+)
+def index_uploaded_document(filename: str) -> IndexedDocument:
+    """Process and index an uploaded PDF in ChromaDB."""
+    safe_filename = Path(filename.replace("\\", "/")).name
+    pdf_path = UPLOAD_DIRECTORY / safe_filename
+
+    if safe_filename != filename or not pdf_path.is_file():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={
+                "code": "document_not_found",
+                "message": f"Document '{filename}' was not found.",
+            },
+        )
+
+    started_at = time.perf_counter()
+
+    try:
+        loaded_document = load_pdf(pdf_path)
+
+        processed_document = process_document(
+            loaded_document,
+            ChunkingConfig(
+                chunk_size=CHUNK_SIZE,
+                chunk_overlap=CHUNK_OVERLAP,
+            ),
+        )
+
+        embedding_manager = EmbeddingManager(
+            EmbeddingConfig(model_name=EMBEDDING_MODEL_NAME),
+        )
+
+        vector_store = VectorStoreManager(
+            embedding_manager=embedding_manager,
+            config=VectorStoreConfig(
+                persist_directory=VECTOR_STORE_DIRECTORY,
+                collection_name=VECTOR_COLLECTION_NAME,
+            ),
+        )
+
+        report = vector_store.index_document(processed_document)
+
+    except (PDFIngestionError, ValueError) as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "code": "indexing_failed",
+                "message": "The stored PDF could not be processed.",
+            },
+        ) from exc
+
+    elapsed_seconds = time.perf_counter() - started_at
+
+    return IndexedDocument(
+        document_id=report.document_id,
+        filename=safe_filename,
+        page_count=processed_document.page_count,
+        total_chunks=report.total_chunks,
+        added_chunks=report.added_chunks,
+        existing_chunks=report.existing_chunks,
+        removed_chunks=report.removed_chunks,
+        collection_count=report.collection_count,
+        elapsed_seconds=round(elapsed_seconds, 3),
     )
