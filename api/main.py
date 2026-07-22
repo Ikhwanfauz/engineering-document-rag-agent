@@ -20,7 +20,7 @@ from src.rag_pipeline import (
     RAGPipeline,
 )
 from src.retriever import DocumentRetriever
-from src.text_chunker import ChunkingConfig, process_document
+from src.text_chunker import ChunkingConfig, compute_document_id, process_document
 from src.vector_store import VectorStoreConfig, VectorStoreManager
 
 UPLOAD_DIRECTORY = Path("data/manuals")
@@ -98,6 +98,90 @@ class QuestionAnswer(BaseModel):
     elapsed_seconds: float
 
 
+class ManagedDocument(BaseModel):
+    """Uploaded document details and current indexing status."""
+
+    document_id: str
+    filename: str
+    size_bytes: int
+    page_count: int
+    text_page_count: int
+    indexed: bool
+    indexed_chunk_count: int
+
+
+class DocumentList(BaseModel):
+    """List of uploaded documents."""
+
+    documents: list[ManagedDocument]
+    total_documents: int
+
+
+class DeletedDocument(BaseModel):
+    """Summary returned after safely deleting one document."""
+
+    document_id: str
+    filename: str
+    removed_chunks: int
+
+
+def _create_vector_store() -> VectorStoreManager:
+    """Create the configured vector-store manager."""
+    embedding_manager = EmbeddingManager(
+        EmbeddingConfig(model_name=EMBEDDING_MODEL_NAME),
+    )
+
+    return VectorStoreManager(
+        embedding_manager=embedding_manager,
+        config=VectorStoreConfig(
+            persist_directory=VECTOR_STORE_DIRECTORY,
+            collection_name=VECTOR_COLLECTION_NAME,
+        ),
+    )
+
+
+def _get_managed_document(
+    filename: str,
+    vector_store: VectorStoreManager,
+) -> ManagedDocument:
+    """Load one uploaded document and its current indexing status."""
+    safe_filename = Path(filename.replace("\\", "/")).name
+    pdf_path = UPLOAD_DIRECTORY / safe_filename
+
+    if safe_filename != filename or not pdf_path.is_file():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={
+                "code": "document_not_found",
+                "message": f"Document '{filename}' was not found.",
+            },
+        )
+
+    try:
+        loaded_document = load_pdf(pdf_path)
+        document_id = compute_document_id(loaded_document)
+        indexed_chunk_count = vector_store.document_chunk_count(document_id)
+        size_bytes = pdf_path.stat().st_size
+    except (PDFIngestionError, ValueError, OSError) as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "code": "document_read_failed",
+                "message": f"Document '{safe_filename}' could not be read.",
+            },
+        ) from exc
+
+    return ManagedDocument(
+        document_id=document_id,
+        filename=safe_filename,
+        size_bytes=size_bytes,
+        page_count=loaded_document.page_count,
+        text_page_count=loaded_document.text_page_count,
+        indexed=indexed_chunk_count > 0,
+        indexed_chunk_count=indexed_chunk_count,
+    )
+
+
 @app.get("/health", tags=["system"])
 def health_check() -> dict[str, str]:
     """Return the current API health status."""
@@ -105,6 +189,76 @@ def health_check() -> dict[str, str]:
         "status": "ok",
         "version": "4C",
     }
+
+
+@app.get(
+    "/documents",
+    response_model=DocumentList,
+    tags=["documents"],
+)
+def list_documents() -> DocumentList:
+    """List all uploaded PDF documents and their indexing status."""
+    vector_store = _create_vector_store()
+
+    filenames = []
+    if UPLOAD_DIRECTORY.is_dir():
+        filenames = sorted(
+            (
+                path.name
+                for path in UPLOAD_DIRECTORY.iterdir()
+                if path.is_file() and path.suffix.lower() == ".pdf"
+            ),
+            key=str.casefold,
+        )
+
+    documents = [
+        _get_managed_document(filename, vector_store) for filename in filenames
+    ]
+
+    return DocumentList(
+        documents=documents,
+        total_documents=len(documents),
+    )
+
+
+@app.get(
+    "/documents/{filename}",
+    response_model=ManagedDocument,
+    tags=["documents"],
+)
+def get_document(filename: str) -> ManagedDocument:
+    """Return one uploaded document and its indexing status."""
+    vector_store = _create_vector_store()
+    return _get_managed_document(filename, vector_store)
+
+
+@app.delete(
+    "/documents/{filename}",
+    response_model=DeletedDocument,
+    tags=["documents"],
+)
+def delete_document(filename: str) -> DeletedDocument:
+    """Delete one uploaded PDF and all its indexed chunks."""
+    vector_store = _create_vector_store()
+    document = _get_managed_document(filename, vector_store)
+
+    try:
+        removed_chunks = vector_store.delete_document(document.document_id)
+        (UPLOAD_DIRECTORY / document.filename).unlink()
+    except OSError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "code": "document_delete_failed",
+                "message": f"Document '{document.filename}' could not be deleted.",
+            },
+        ) from exc
+
+    return DeletedDocument(
+        document_id=document.document_id,
+        filename=document.filename,
+        removed_chunks=removed_chunks,
+    )
 
 
 @app.post(

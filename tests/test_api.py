@@ -58,6 +58,14 @@ class FakeVectorStoreManager:
             collection_count=len(document.chunks),
         )
 
+    def document_chunk_count(self, document_id: str) -> int:
+        """Simulate one indexed chunk for an uploaded document."""
+        return 1
+
+    def delete_document(self, document_id: str) -> int:
+        """Simulate deleting one indexed chunk."""
+        return 1
+
 
 class FakeExistingVectorStoreManager(FakeVectorStoreManager):
     """Simulate indexing a document whose chunks already exist."""
@@ -445,3 +453,80 @@ def test_ask_endpoint_reports_grounding_validation_failure(
     assert response.json()["detail"]["message"] == (
         "The generated answer failed grounding validation."
     )
+
+
+def test_list_documents_returns_uploaded_pdfs(
+    upload_directory: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    pdf_bytes = create_pdf_bytes()
+    (upload_directory / "manual.pdf").write_bytes(pdf_bytes)
+
+    monkeypatch.setattr(api_main, "EmbeddingManager", FakeEmbeddingManager)
+    monkeypatch.setattr(api_main, "VectorStoreManager", FakeVectorStoreManager)
+
+    response = client.get("/documents")
+
+    assert response.status_code == 200
+    assert response.json()["total_documents"] == 1
+
+    document = response.json()["documents"][0]
+    assert document["filename"] == "manual.pdf"
+    assert document["size_bytes"] == len(pdf_bytes)
+    assert document["page_count"] == 1
+    assert document["text_page_count"] == 1
+    assert document["indexed"] is True
+    assert document["indexed_chunk_count"] == 1
+    assert len(document["document_id"]) == 64
+
+
+def test_get_document_returns_document_details(
+    upload_directory: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    (upload_directory / "manual.pdf").write_bytes(create_pdf_bytes())
+
+    monkeypatch.setattr(api_main, "EmbeddingManager", FakeEmbeddingManager)
+    monkeypatch.setattr(api_main, "VectorStoreManager", FakeVectorStoreManager)
+
+    response = client.get("/documents/manual.pdf")
+
+    assert response.status_code == 200
+    assert response.json()["filename"] == "manual.pdf"
+    assert response.json()["page_count"] == 1
+    assert response.json()["text_page_count"] == 1
+    assert response.json()["indexed"] is True
+    assert response.json()["indexed_chunk_count"] == 1
+    assert len(response.json()["document_id"]) == 64
+
+
+def test_delete_document_removes_pdf_and_indexed_chunks(
+    upload_directory: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    pdf_path = upload_directory / "manual.pdf"
+    pdf_path.write_bytes(create_pdf_bytes())
+
+    monkeypatch.setattr(api_main, "EmbeddingManager", FakeEmbeddingManager)
+    monkeypatch.setattr(api_main, "VectorStoreManager", FakeVectorStoreManager)
+
+    response = client.delete("/documents/manual.pdf")
+
+    assert response.status_code == 200
+    assert response.json()["filename"] == "manual.pdf"
+    assert response.json()["removed_chunks"] == 1
+    assert len(response.json()["document_id"]) == 64
+    assert not pdf_path.exists()
+
+
+def test_get_document_rejects_missing_document(
+    upload_directory: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(api_main, "EmbeddingManager", FakeEmbeddingManager)
+    monkeypatch.setattr(api_main, "VectorStoreManager", FakeVectorStoreManager)
+
+    response = client.get("/documents/missing.pdf")
+
+    assert response.status_code == 404
+    assert response.json()["detail"]["code"] == "document_not_found"

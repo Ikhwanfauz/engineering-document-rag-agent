@@ -144,3 +144,12 @@ class VectorStoreManager:
             where={"document_id": document_id},
         )
         return len(result["ids"] or [])
+
+    def delete_document(self, document_id: str) -> int:
+        """Delete every indexed chunk belonging to one document."""
+        stored_ids = self._document_chunk_ids(document_id)
+
+        if stored_ids:
+            self.collection.delete(ids=list(stored_ids))
+
+        return len(stored_ids)

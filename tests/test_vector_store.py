@@ -132,3 +132,37 @@ def test_changed_chunking_replaces_stale_document_chunks() -> None:
     assert store.document_chunk_count(updated_document.document_id) == len(
         updated_document.chunks
     )
+
+
+def test_delete_document_removes_only_its_indexed_chunks() -> None:
+    embedding_manager = FakeEmbeddingManager()
+    store = _create_store(embedding_manager)
+
+    first_document = process_document(
+        _make_document(["Disconnect power before maintenance."])
+    )
+    second_document = process_document(
+        _make_document(["Inspect the emergency stop before operation."])
+    )
+
+    store.index_document(first_document)
+    store.index_document(second_document)
+
+    removed_chunks = store.delete_document(first_document.document_id)
+
+    assert removed_chunks == len(first_document.chunks)
+    assert store.document_chunk_count(first_document.document_id) == 0
+    assert store.document_chunk_count(second_document.document_id) == len(
+        second_document.chunks
+    )
+    assert store.collection.count() == len(second_document.chunks)
+
+
+def test_delete_document_returns_zero_when_document_is_not_indexed() -> None:
+    embedding_manager = FakeEmbeddingManager()
+    store = _create_store(embedding_manager)
+
+    removed_chunks = store.delete_document("missing-document-id")
+
+    assert removed_chunks == 0
+    assert store.collection.count() == 0
