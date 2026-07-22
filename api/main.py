@@ -13,6 +13,13 @@ from pydantic import BaseModel
 
 from src.document_loader import PDFIngestionError, load_pdf
 from src.embedding_manager import EmbeddingConfig, EmbeddingManager
+from src.llm_provider import OllamaLLMProvider
+from src.rag_pipeline import (
+    DEFAULT_MINIMUM_SIMILARITY,
+    GroundingValidationError,
+    RAGPipeline,
+)
+from src.retriever import DocumentRetriever
 from src.text_chunker import ChunkingConfig, process_document
 from src.vector_store import VectorStoreConfig, VectorStoreManager
 
@@ -24,10 +31,14 @@ VECTOR_COLLECTION_NAME = "engineering_documents"
 EMBEDDING_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 CHUNK_SIZE = 1000
 CHUNK_OVERLAP = 150
+LLM_MODEL_NAME = "qwen3:8b"
+OLLAMA_BASE_URL = "http://localhost:11434"
+LLM_TEMPERATURE = 0.0
+DEFAULT_TOP_K = 3
 
 app = FastAPI(
     title="Engineering Document RAG Agent API",
-    version="4B",
+    version="4C",
 )
 
 
@@ -55,12 +66,44 @@ class IndexedDocument(BaseModel):
     elapsed_seconds: float
 
 
+class QuestionRequest(BaseModel):
+    """Question and optional retrieval settings."""
+
+    question: str
+    document_id: str | None = None
+    top_k: int = DEFAULT_TOP_K
+    minimum_similarity: float = DEFAULT_MINIMUM_SIMILARITY
+
+
+class AnswerCitation(BaseModel):
+    """Citation returned with a grounded answer."""
+
+    document_id: str
+    source_name: str
+    page_number: int
+    page_label: str
+    label: str
+    excerpt: str
+
+
+class QuestionAnswer(BaseModel):
+    """Grounded answer returned by the question-answering endpoint."""
+
+    question: str
+    answer: str
+    status: str
+    abstained: bool
+    citations: list[AnswerCitation]
+    accepted_evidence_count: int
+    elapsed_seconds: float
+
+
 @app.get("/health", tags=["system"])
 def health_check() -> dict[str, str]:
     """Return the current API health status."""
     return {
         "status": "ok",
-        "version": "4B",
+        "version": "4C",
     }
 
 
@@ -231,5 +274,92 @@ def index_uploaded_document(filename: str) -> IndexedDocument:
         existing_chunks=report.existing_chunks,
         removed_chunks=report.removed_chunks,
         collection_count=report.collection_count,
+        elapsed_seconds=round(elapsed_seconds, 3),
+    )
+
+
+@app.post(
+    "/questions/ask",
+    response_model=QuestionAnswer,
+    tags=["questions"],
+)
+def ask_question(request: QuestionRequest) -> QuestionAnswer:
+    """Answer a question using indexed engineering documents."""
+    started_at = time.perf_counter()
+
+    try:
+        embedding_manager = EmbeddingManager(
+            EmbeddingConfig(model_name=EMBEDDING_MODEL_NAME),
+        )
+
+        vector_store = VectorStoreManager(
+            embedding_manager=embedding_manager,
+            config=VectorStoreConfig(
+                persist_directory=VECTOR_STORE_DIRECTORY,
+                collection_name=VECTOR_COLLECTION_NAME,
+            ),
+        )
+
+        retriever = DocumentRetriever(
+            embedding_manager=embedding_manager,
+            vector_store=vector_store,
+        )
+
+        llm_provider = OllamaLLMProvider(
+            model=LLM_MODEL_NAME,
+            temperature=LLM_TEMPERATURE,
+            base_url=OLLAMA_BASE_URL,
+        )
+
+        pipeline = RAGPipeline(
+            retriever=retriever,
+            llm_provider=llm_provider,
+            minimum_similarity=request.minimum_similarity,
+        )
+
+        result = pipeline.answer(
+            request.question,
+            top_k=request.top_k,
+            document_id=request.document_id,
+        )
+
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "code": "invalid_question_request",
+                "message": str(exc),
+            },
+        ) from exc
+    except GroundingValidationError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail={
+                "code": "grounding_validation_failed",
+                "message": "The generated answer failed grounding validation.",
+            },
+        ) from exc
+
+    citations = [
+        AnswerCitation(
+            document_id=citation.document_id,
+            source_name=citation.source_name,
+            page_number=citation.page_number,
+            page_label=citation.page_label,
+            label=citation.label,
+            excerpt=citation.excerpt,
+        )
+        for citation in result.citations
+    ]
+
+    elapsed_seconds = time.perf_counter() - started_at
+
+    return QuestionAnswer(
+        question=result.question,
+        answer=result.answer,
+        status="ABSTAINED" if result.abstained else "ANSWERED",
+        abstained=result.abstained,
+        citations=citations,
+        accepted_evidence_count=len(result.evidence),
         elapsed_seconds=round(elapsed_seconds, 3),
     )

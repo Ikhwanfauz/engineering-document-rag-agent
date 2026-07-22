@@ -1,6 +1,7 @@
 """Tests for the FastAPI backend."""
 
 from pathlib import Path
+from types import SimpleNamespace
 
 import pymupdf
 import pytest
@@ -72,13 +73,123 @@ class FakeExistingVectorStoreManager(FakeVectorStoreManager):
         )
 
 
+class FakeDocumentRetriever:
+    """Avoid real vector retrieval during API tests."""
+
+    def __init__(self, embedding_manager: object, vector_store: object) -> None:
+        self.embedding_manager = embedding_manager
+        self.vector_store = vector_store
+
+
+class FakeLLMProvider:
+    """Avoid connecting to Ollama during API tests."""
+
+    def __init__(
+        self,
+        model: str,
+        temperature: float,
+        base_url: str,
+    ) -> None:
+        self.model = model
+        self.temperature = temperature
+        self.base_url = base_url
+
+
+class FakeAnsweredRAGPipeline:
+    """Return a predictable grounded answer during API tests."""
+
+    def __init__(
+        self,
+        retriever: object,
+        llm_provider: object,
+        *,
+        minimum_similarity: float,
+    ) -> None:
+        self.retriever = retriever
+        self.llm_provider = llm_provider
+        self.minimum_similarity = minimum_similarity
+
+    def answer(
+        self,
+        question: str,
+        *,
+        top_k: int,
+        document_id: str | None,
+    ) -> SimpleNamespace:
+        citation = SimpleNamespace(
+            document_id=document_id or "a" * 64,
+            source_name="manual.pdf",
+            page_number=50,
+            page_label="50",
+            label="manual.pdf, page 50",
+            excerpt="Support the joint before removing the clamp.",
+        )
+
+        evidence = SimpleNamespace(similarity_score=0.84)
+
+        return SimpleNamespace(
+            question=question,
+            answer="The joint must be supported before removing the clamp.",
+            citations=(citation,),
+            evidence=(evidence,),
+            abstained=False,
+        )
+
+
+class FakeAbstainedRAGPipeline(FakeAnsweredRAGPipeline):
+    """Return a predictable don't-know response during API tests."""
+
+    def answer(
+        self,
+        question: str,
+        *,
+        top_k: int,
+        document_id: str | None,
+    ) -> SimpleNamespace:
+        return SimpleNamespace(
+            question=question,
+            answer="I don't know based on the uploaded documents.",
+            citations=(),
+            evidence=(),
+            abstained=True,
+        )
+
+
+class FakeInvalidRAGPipeline(FakeAnsweredRAGPipeline):
+    """Simulate request validation inside the RAG pipeline."""
+
+    def answer(
+        self,
+        question: str,
+        *,
+        top_k: int,
+        document_id: str | None,
+    ) -> SimpleNamespace:
+        raise ValueError("Question cannot be empty")
+
+
+class FakeGroundingFailureRAGPipeline(FakeAnsweredRAGPipeline):
+    """Simulate an answer that fails grounding validation."""
+
+    def answer(
+        self,
+        question: str,
+        *,
+        top_k: int,
+        document_id: str | None,
+    ) -> SimpleNamespace:
+        raise api_main.GroundingValidationError(
+            "Generated answer softened a mandatory document instruction"
+        )
+
+
 def test_health_endpoint_returns_ok() -> None:
     response = client.get("/health")
 
     assert response.status_code == 200
     assert response.json() == {
         "status": "ok",
-        "version": "4B",
+        "version": "4C",
     }
 
 
@@ -215,3 +326,122 @@ def test_index_endpoint_reports_existing_chunks(
     assert response.json()["existing_chunks"] == 1
     assert response.json()["removed_chunks"] == 0
     assert response.json()["collection_count"] == 1
+
+
+def test_ask_endpoint_returns_grounded_answer(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(api_main, "EmbeddingManager", FakeEmbeddingManager)
+    monkeypatch.setattr(api_main, "VectorStoreManager", FakeVectorStoreManager)
+    monkeypatch.setattr(api_main, "DocumentRetriever", FakeDocumentRetriever)
+    monkeypatch.setattr(api_main, "OllamaLLMProvider", FakeLLMProvider)
+    monkeypatch.setattr(api_main, "RAGPipeline", FakeAnsweredRAGPipeline)
+
+    response = client.post(
+        "/questions/ask",
+        json={
+            "question": "What must be done before removing the clamp?",
+            "document_id": "a" * 64,
+            "top_k": 3,
+            "minimum_similarity": 0.60,
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["question"] == (
+        "What must be done before removing the clamp?"
+    )
+    assert response.json()["answer"] == (
+        "The joint must be supported before removing the clamp."
+    )
+    assert response.json()["status"] == "ANSWERED"
+    assert response.json()["abstained"] is False
+    assert response.json()["accepted_evidence_count"] == 1
+    assert response.json()["citations"][0]["document_id"] == "a" * 64
+    assert response.json()["citations"][0]["source_name"] == "manual.pdf"
+    assert response.json()["citations"][0]["page_number"] == 50
+    assert response.json()["citations"][0]["page_label"] == "50"
+    assert response.json()["citations"][0]["label"] == "manual.pdf, page 50"
+    assert response.json()["elapsed_seconds"] >= 0
+
+
+def test_ask_endpoint_returns_abstained_answer(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(api_main, "EmbeddingManager", FakeEmbeddingManager)
+    monkeypatch.setattr(api_main, "VectorStoreManager", FakeVectorStoreManager)
+    monkeypatch.setattr(api_main, "DocumentRetriever", FakeDocumentRetriever)
+    monkeypatch.setattr(api_main, "OllamaLLMProvider", FakeLLMProvider)
+    monkeypatch.setattr(api_main, "RAGPipeline", FakeAbstainedRAGPipeline)
+
+    response = client.post(
+        "/questions/ask",
+        json={
+            "question": "What is the robot Wi-Fi password?",
+            "top_k": 3,
+            "minimum_similarity": 0.60,
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["question"] == "What is the robot Wi-Fi password?"
+    assert response.json()["answer"] == (
+        "I don't know based on the uploaded documents."
+    )
+    assert response.json()["status"] == "ABSTAINED"
+    assert response.json()["abstained"] is True
+    assert response.json()["citations"] == []
+    assert response.json()["accepted_evidence_count"] == 0
+    assert response.json()["elapsed_seconds"] >= 0
+
+
+def test_ask_endpoint_rejects_invalid_question(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(api_main, "EmbeddingManager", FakeEmbeddingManager)
+    monkeypatch.setattr(api_main, "VectorStoreManager", FakeVectorStoreManager)
+    monkeypatch.setattr(api_main, "DocumentRetriever", FakeDocumentRetriever)
+    monkeypatch.setattr(api_main, "OllamaLLMProvider", FakeLLMProvider)
+    monkeypatch.setattr(api_main, "RAGPipeline", FakeInvalidRAGPipeline)
+
+    response = client.post(
+        "/questions/ask",
+        json={
+            "question": "",
+            "top_k": 3,
+            "minimum_similarity": 0.60,
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"]["code"] == "invalid_question_request"
+    assert response.json()["detail"]["message"] == "Question cannot be empty"
+
+
+def test_ask_endpoint_reports_grounding_validation_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(api_main, "EmbeddingManager", FakeEmbeddingManager)
+    monkeypatch.setattr(api_main, "VectorStoreManager", FakeVectorStoreManager)
+    monkeypatch.setattr(api_main, "DocumentRetriever", FakeDocumentRetriever)
+    monkeypatch.setattr(api_main, "OllamaLLMProvider", FakeLLMProvider)
+    monkeypatch.setattr(
+        api_main,
+        "RAGPipeline",
+        FakeGroundingFailureRAGPipeline,
+    )
+
+    response = client.post(
+        "/questions/ask",
+        json={
+            "question": "What mandatory action is required?",
+            "top_k": 3,
+            "minimum_similarity": 0.60,
+        },
+    )
+
+    assert response.status_code == 502
+    assert response.json()["detail"]["code"] == "grounding_validation_failed"
+    assert response.json()["detail"]["message"] == (
+        "The generated answer failed grounding validation."
+    )
