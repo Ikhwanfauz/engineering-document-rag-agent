@@ -5,7 +5,7 @@ from typing import Any
 
 import pytest
 
-from src.llm_provider import OllamaLLMProvider
+from src.llm_provider import LLMServiceError, OllamaLLMProvider
 
 
 class FakeChatModel:
@@ -19,6 +19,15 @@ class FakeChatModel:
     ) -> SimpleNamespace:
         self.messages = messages
         return SimpleNamespace(content=self.response_content)
+
+class FailingChatModel:
+    """Simulate an unavailable Ollama service."""
+
+    def invoke(
+        self,
+        messages: list[tuple[str, str]],
+    ) -> SimpleNamespace:
+        raise ConnectionError("Ollama is unavailable")
 
 
 def test_ollama_provider_sends_system_and_user_prompts() -> None:
@@ -35,6 +44,17 @@ def test_ollama_provider_sends_system_and_user_prompts() -> None:
         ("system", "Answer only from the evidence."),
         ("human", "How should the joint be supported?"),
     ]
+
+def test_ollama_service_failure_is_wrapped() -> None:
+    provider = OllamaLLMProvider(client=FailingChatModel())
+
+    with pytest.raises(
+        LLMServiceError,
+        match="language-model service could not generate a response",
+    ) as error:
+        provider.generate("System prompt", "User question")
+
+    assert isinstance(error.value.__cause__, ConnectionError)
 
 
 @pytest.mark.parametrize(

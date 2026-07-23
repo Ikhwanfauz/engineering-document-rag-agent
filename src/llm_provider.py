@@ -13,6 +13,8 @@ class LLMProvider(Protocol):
     def generate(self, system_prompt: str, user_prompt: str) -> str:
         """Generate one text response from system and user prompts."""
 
+class LLMServiceError(RuntimeError):
+    """Raised when the configured language-model service cannot generate a response."""
 
 class OllamaLLMProvider:
     """Generate responses using a local Ollama chat model."""
@@ -50,13 +52,17 @@ class OllamaLLMProvider:
         if not user_prompt.strip():
             raise ValueError("User prompt cannot be empty")
 
-        response = self._client.invoke(
-            [
-                ("system", system_prompt),
-                ("human", user_prompt),
-            ]
-        )
-
+        try:
+            response = self._client.invoke(
+                [
+                    ("system", system_prompt),
+                    ("human", user_prompt),
+                ]
+            )
+        except Exception as exc:
+            raise LLMServiceError(
+                "The language-model service could not generate a response"
+            ) from exc
         if not isinstance(response.content, str):
             raise TypeError("LLM response content must be text")
 

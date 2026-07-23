@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 
 import api.main as api_main
 from api.main import app
+from src.llm_provider import LLMServiceError
 from src.vector_store import IndexingReport
 
 client = TestClient(app)
@@ -133,7 +134,18 @@ class FakeAnsweredRAGPipeline:
             excerpt="Support the joint before removing the clamp.",
         )
 
-        evidence = SimpleNamespace(similarity_score=0.84)
+        evidence = SimpleNamespace(
+            chunk_id="chunk-001",
+            document_id=document_id or "a" * 64,
+            source_name="manual.pdf",
+            page_number=50,
+            page_label="50",
+            chunk_index=0,
+            text="Support the joint before removing the clamp.",
+            distance=0.16,
+            similarity_score=0.84,
+            citation="manual.pdf, page 50",
+        )
 
         return SimpleNamespace(
             question=question,
@@ -174,6 +186,20 @@ class FakeInvalidRAGPipeline(FakeAnsweredRAGPipeline):
         document_id: str | None,
     ) -> SimpleNamespace:
         raise ValueError("Question cannot be empty")
+
+class FakeLLMServiceFailureRAGPipeline(FakeAnsweredRAGPipeline):
+    """Simulate an unavailable language-model service."""
+
+    def answer(
+        self,
+        question: str,
+        *,
+        top_k: int,
+        document_id: str | None,
+    ) -> SimpleNamespace:
+        raise LLMServiceError(
+            "The language-model service could not generate a response"
+        )
 
 
 class FakeGroundingFailureRAGPipeline(FakeAnsweredRAGPipeline):
@@ -365,6 +391,17 @@ def test_ask_endpoint_returns_grounded_answer(
     assert response.json()["status"] == "ANSWERED"
     assert response.json()["abstained"] is False
     assert response.json()["accepted_evidence_count"] == 1
+    evidence = response.json()["evidence"][0]
+    assert evidence["chunk_id"] == "chunk-001"
+    assert evidence["document_id"] == "a" * 64
+    assert evidence["source_name"] == "manual.pdf"
+    assert evidence["page_number"] == 50
+    assert evidence["page_label"] == "50"
+    assert evidence["chunk_index"] == 0
+    assert evidence["text"] == "Support the joint before removing the clamp."
+    assert evidence["distance"] == 0.16
+    assert evidence["similarity_score"] == 0.84
+    assert evidence["citation"] == "manual.pdf, page 50"
     assert response.json()["citations"][0]["document_id"] == "a" * 64
     assert response.json()["citations"][0]["source_name"] == "manual.pdf"
     assert response.json()["citations"][0]["page_number"] == 50
@@ -399,6 +436,7 @@ def test_ask_endpoint_returns_abstained_answer(
     assert response.json()["status"] == "ABSTAINED"
     assert response.json()["abstained"] is True
     assert response.json()["citations"] == []
+    assert response.json()["evidence"] == []
     assert response.json()["accepted_evidence_count"] == 0
     assert response.json()["elapsed_seconds"] >= 0
 
@@ -424,6 +462,34 @@ def test_ask_endpoint_rejects_invalid_question(
     assert response.status_code == 400
     assert response.json()["detail"]["code"] == "invalid_question_request"
     assert response.json()["detail"]["message"] == "Question cannot be empty"
+
+def test_ask_endpoint_reports_llm_service_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(api_main, "EmbeddingManager", FakeEmbeddingManager)
+    monkeypatch.setattr(api_main, "VectorStoreManager", FakeVectorStoreManager)
+    monkeypatch.setattr(api_main, "DocumentRetriever", FakeDocumentRetriever)
+    monkeypatch.setattr(api_main, "OllamaLLMProvider", FakeLLMProvider)
+    monkeypatch.setattr(
+        api_main,
+        "RAGPipeline",
+        FakeLLMServiceFailureRAGPipeline,
+    )
+
+    response = client.post(
+        "/questions/ask",
+        json={
+            "question": "How should the joint be supported?",
+            "top_k": 3,
+            "minimum_similarity": 0.60,
+        },
+    )
+
+    assert response.status_code == 502
+    assert response.json()["detail"]["code"] == "llm_service_unavailable"
+    assert response.json()["detail"]["message"] == (
+        "The language-model service is unavailable."
+    )
 
 
 def test_ask_endpoint_reports_grounding_validation_failure(

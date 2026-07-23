@@ -13,7 +13,7 @@ from pydantic import BaseModel
 
 from src.document_loader import PDFIngestionError, load_pdf
 from src.embedding_manager import EmbeddingConfig, EmbeddingManager
-from src.llm_provider import OllamaLLMProvider
+from src.llm_provider import LLMServiceError, OllamaLLMProvider
 from src.rag_pipeline import (
     DEFAULT_MINIMUM_SIMILARITY,
     GroundingValidationError,
@@ -85,6 +85,20 @@ class AnswerCitation(BaseModel):
     label: str
     excerpt: str
 
+class RetrievedEvidence(BaseModel):
+    """Retrieved evidence chunk returned with a grounded answer."""
+
+    chunk_id: str
+    document_id: str
+    source_name: str
+    page_number: int
+    page_label: str
+    chunk_index: int
+    text: str
+    distance: float
+    similarity_score: float
+    citation: str
+
 
 class QuestionAnswer(BaseModel):
     """Grounded answer returned by the question-answering endpoint."""
@@ -94,6 +108,7 @@ class QuestionAnswer(BaseModel):
     status: str
     abstained: bool
     citations: list[AnswerCitation]
+    evidence: list[RetrievedEvidence]
     accepted_evidence_count: int
     elapsed_seconds: float
 
@@ -485,6 +500,15 @@ def ask_question(request: QuestionRequest) -> QuestionAnswer:
                 "message": str(exc),
             },
         ) from exc
+
+    except LLMServiceError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail={
+                "code": "llm_service_unavailable",
+                "message": "The language-model service is unavailable.",
+            },
+        ) from exc
     except GroundingValidationError as exc:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
@@ -506,6 +530,22 @@ def ask_question(request: QuestionRequest) -> QuestionAnswer:
         for citation in result.citations
     ]
 
+    evidence = [
+        RetrievedEvidence(
+            chunk_id=chunk.chunk_id,
+            document_id=chunk.document_id,
+            source_name=chunk.source_name,
+            page_number=chunk.page_number,
+            page_label=chunk.page_label,
+            chunk_index=chunk.chunk_index,
+            text=chunk.text,
+            distance=chunk.distance,
+            similarity_score=chunk.similarity_score,
+            citation=chunk.citation,
+        )
+        for chunk in result.evidence
+    ]
+
     elapsed_seconds = time.perf_counter() - started_at
 
     return QuestionAnswer(
@@ -514,6 +554,7 @@ def ask_question(request: QuestionRequest) -> QuestionAnswer:
         status="ABSTAINED" if result.abstained else "ANSWERED",
         abstained=result.abstained,
         citations=citations,
+        evidence=evidence,
         accepted_evidence_count=len(result.evidence),
         elapsed_seconds=round(elapsed_seconds, 3),
     )
