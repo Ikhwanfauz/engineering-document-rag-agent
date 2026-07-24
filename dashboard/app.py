@@ -45,6 +45,16 @@ def index_document(filename: str) -> dict[str, Any]:
     response.raise_for_status()
     return response.json()
 
+def ask_question(question: str) -> dict[str, Any]:
+    """Send a question to the FastAPI RAG endpoint."""
+    response = requests.post(
+        f"{API_BASE_URL}/questions/ask",
+        json={"question": question},
+        timeout=300,
+    )
+    response.raise_for_status()
+    return response.json()
+
 def get_api_error(
     error: requests.HTTPError,
     default_message: str,
@@ -149,6 +159,77 @@ def render_document_upload() -> None:
             f"Indexing completed in {index_result['elapsed_seconds']:.3f} seconds."
         )
 
+def render_question_answer() -> None:
+    """Render the grounded question-answer interface."""
+    st.subheader("Ask a question")
+
+    with st.form("question_form"):
+        question = st.text_area(
+            "Question about the indexed manual",
+            placeholder="Example: How should I handle ESD-sensitive components?",
+        )
+        submitted = st.form_submit_button(
+            "Ask question",
+            type="primary",
+        )
+
+    if not submitted:
+        return
+
+    if not question.strip():
+        st.warning("Enter a question before submitting.")
+        return
+
+    try:
+        with st.spinner("Searching the manual and generating an answer..."):
+            result = ask_question(question.strip())
+
+    except requests.HTTPError as exc:
+        _, message = get_api_error(
+            exc,
+            "The question could not be answered.",
+        )
+        st.error(message)
+        return
+
+    except requests.RequestException:
+        st.error(
+            "Could not communicate with FastAPI. "
+            "Check that the backend and Ollama are running."
+        )
+        return
+
+    st.markdown("#### Answer")
+
+    if result["abstained"]:
+        st.warning(result["answer"])
+    else:
+        st.write(result["answer"])
+
+    column_1, column_2, column_3 = st.columns(3)
+    column_1.metric("Status", result["status"])
+    column_2.metric(
+        "Accepted evidence",
+        result["accepted_evidence_count"],
+    )
+    column_3.metric(
+        "Response time",
+        f"{result['elapsed_seconds']:.3f} s",
+    )
+
+    citations = result["citations"]
+
+    if citations:
+        st.markdown("#### Citations")
+
+        for citation in citations:
+            with st.expander(citation["label"]):
+                st.caption(
+                    f"{citation['source_name']} — "
+                    f"page {citation['page_label']}"
+                )
+                st.write(citation["excerpt"])
+
 
 def main() -> None:
     """Render the Streamlit dashboard."""
@@ -184,6 +265,9 @@ def main() -> None:
 
     st.divider()
     render_document_upload()
+
+    st.divider()
+    render_question_answer()
 
 
 if __name__ == "__main__":
