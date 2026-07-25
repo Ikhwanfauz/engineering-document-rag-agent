@@ -10,6 +10,7 @@ from uuid import uuid4
 
 from fastapi import FastAPI, File, HTTPException, UploadFile, status
 from pydantic import BaseModel
+from database.db import CitationReference, store_interaction
 
 from src.document_loader import PDFIngestionError, load_pdf
 from src.embedding_manager import EmbeddingConfig, EmbeddingManager
@@ -547,11 +548,28 @@ def ask_question(request: QuestionRequest) -> QuestionAnswer:
     ]
 
     elapsed_seconds = time.perf_counter() - started_at
+    answer_status = "ABSTAINED" if result.abstained else "ANSWERED"
+
+    store_interaction(
+        question=result.question,
+        answer=result.answer,
+        status=answer_status,
+        latency_seconds=elapsed_seconds,
+        citations=(
+            CitationReference(
+                document_id=citation.document_id,
+                source_name=citation.source_name,
+                page_number=citation.page_number,
+                page_label=citation.page_label,
+            )
+            for citation in result.citations
+        ),
+    )
 
     return QuestionAnswer(
         question=result.question,
         answer=result.answer,
-        status="ABSTAINED" if result.abstained else "ANSWERED",
+        status=answer_status,
         abstained=result.abstained,
         citations=citations,
         evidence=evidence,

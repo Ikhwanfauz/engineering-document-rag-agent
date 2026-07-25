@@ -24,6 +24,20 @@ def upload_directory(
     monkeypatch.setattr(api_main, "UPLOAD_DIRECTORY", tmp_path)
     return tmp_path
 
+@pytest.fixture(autouse=True)
+def stored_interactions(
+    monkeypatch: pytest.MonkeyPatch,
+) -> list[dict[str, object]]:
+    """Capture API interaction logs without writing to the real database."""
+    interactions: list[dict[str, object]] = []
+
+    def fake_store_interaction(**kwargs: object) -> int:
+        interactions.append(kwargs)
+        return len(interactions)
+
+    monkeypatch.setattr(api_main, "store_interaction", fake_store_interaction)
+    return interactions
+
 
 def create_pdf_bytes() -> bytes:
     """Create a small readable PDF for upload tests."""
@@ -364,6 +378,7 @@ def test_index_endpoint_reports_existing_chunks(
 
 def test_ask_endpoint_returns_grounded_answer(
     monkeypatch: pytest.MonkeyPatch,
+    stored_interactions: list[dict[str, object]],
 ) -> None:
     monkeypatch.setattr(api_main, "EmbeddingManager", FakeEmbeddingManager)
     monkeypatch.setattr(api_main, "VectorStoreManager", FakeVectorStoreManager)
@@ -412,6 +427,7 @@ def test_ask_endpoint_returns_grounded_answer(
 
 def test_ask_endpoint_returns_abstained_answer(
     monkeypatch: pytest.MonkeyPatch,
+    stored_interactions: list[dict[str, object]],
 ) -> None:
     monkeypatch.setattr(api_main, "EmbeddingManager", FakeEmbeddingManager)
     monkeypatch.setattr(api_main, "VectorStoreManager", FakeVectorStoreManager)
@@ -440,9 +456,23 @@ def test_ask_endpoint_returns_abstained_answer(
     assert response.json()["accepted_evidence_count"] == 0
     assert response.json()["elapsed_seconds"] >= 0
 
+    assert len(stored_interactions) == 1
+
+    stored_interaction = stored_interactions[0]
+    assert stored_interaction["question"] == (
+        "What is the robot Wi-Fi password?"
+    )
+    assert stored_interaction["answer"] == (
+        "I don't know based on the uploaded documents."
+    )
+    assert stored_interaction["status"] == "ABSTAINED"
+    assert stored_interaction["latency_seconds"] >= 0
+    assert tuple(stored_interaction["citations"]) == ()
+
 
 def test_ask_endpoint_rejects_invalid_question(
     monkeypatch: pytest.MonkeyPatch,
+    stored_interactions: list[dict[str, object]],
 ) -> None:
     monkeypatch.setattr(api_main, "EmbeddingManager", FakeEmbeddingManager)
     monkeypatch.setattr(api_main, "VectorStoreManager", FakeVectorStoreManager)
@@ -462,9 +492,11 @@ def test_ask_endpoint_rejects_invalid_question(
     assert response.status_code == 400
     assert response.json()["detail"]["code"] == "invalid_question_request"
     assert response.json()["detail"]["message"] == "Question cannot be empty"
+    assert stored_interactions == []
 
 def test_ask_endpoint_reports_llm_service_failure(
     monkeypatch: pytest.MonkeyPatch,
+    stored_interactions: list[dict[str, object]],
 ) -> None:
     monkeypatch.setattr(api_main, "EmbeddingManager", FakeEmbeddingManager)
     monkeypatch.setattr(api_main, "VectorStoreManager", FakeVectorStoreManager)
@@ -490,10 +522,12 @@ def test_ask_endpoint_reports_llm_service_failure(
     assert response.json()["detail"]["message"] == (
         "The language-model service is unavailable."
     )
+    assert stored_interactions == []
 
 
 def test_ask_endpoint_reports_grounding_validation_failure(
     monkeypatch: pytest.MonkeyPatch,
+    stored_interactions: list[dict[str, object]],
 ) -> None:
     monkeypatch.setattr(api_main, "EmbeddingManager", FakeEmbeddingManager)
     monkeypatch.setattr(api_main, "VectorStoreManager", FakeVectorStoreManager)
@@ -519,6 +553,7 @@ def test_ask_endpoint_reports_grounding_validation_failure(
     assert response.json()["detail"]["message"] == (
         "The generated answer failed grounding validation."
     )
+    assert stored_interactions == []
 
 
 def test_list_documents_returns_uploaded_pdfs(
