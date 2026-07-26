@@ -55,6 +55,29 @@ def ask_question(question: str) -> dict[str, Any]:
     response.raise_for_status()
     return response.json()
 
+def submit_feedback(
+    interaction_id: int,
+    feedback: str,
+) -> dict[str, Any]:
+    """Submit positive or negative feedback for one interaction."""
+    response = requests.post(
+        f"{API_BASE_URL}/interactions/{interaction_id}/feedback",
+        json={"feedback": feedback},
+        timeout=10,
+    )
+    response.raise_for_status()
+    return response.json()
+
+def fetch_interaction_history(limit: int = 10) -> dict[str, Any]:
+    """Request the most recent question-and-answer interactions."""
+    response = requests.get(
+        f"{API_BASE_URL}/interactions",
+        params={"limit": limit},
+        timeout=10,
+    )
+    response.raise_for_status()
+    return response.json()
+
 def get_api_error(
     error: requests.HTTPError,
     default_message: str,
@@ -159,6 +182,70 @@ def render_document_upload() -> None:
             f"Indexing completed in {index_result['elapsed_seconds']:.3f} seconds."
         )
 
+def render_feedback_controls(result: dict[str, Any]) -> None:
+    """Render positive and negative feedback buttons."""
+    interaction_id = result.get("interaction_id")
+
+    if interaction_id is None:
+        return
+
+    saved_feedback = st.session_state.get(f"feedback_{interaction_id}")
+
+    if saved_feedback is not None:
+        feedback_label = (
+            "Helpful" if saved_feedback == "POSITIVE" else "Not helpful"
+        )
+        st.info(f"Your feedback: {feedback_label}")
+        return
+
+    st.markdown("#### Was this answer helpful?")
+
+    positive_column, negative_column = st.columns(2)
+
+    positive_clicked = positive_column.button(
+        "👍 Helpful",
+        key=f"positive_feedback_{interaction_id}",
+        use_container_width=True,
+    )
+    negative_clicked = negative_column.button(
+        "👎 Not helpful",
+        key=f"negative_feedback_{interaction_id}",
+        use_container_width=True,
+    )
+
+    selected_feedback = None
+
+    if positive_clicked:
+        selected_feedback = "POSITIVE"
+    elif negative_clicked:
+        selected_feedback = "NEGATIVE"
+
+    if selected_feedback is None:
+        return
+
+    try:
+        with st.spinner("Submitting feedback..."):
+            submit_feedback(
+                interaction_id=interaction_id,
+                feedback=selected_feedback,
+            )
+
+    except requests.HTTPError as exc:
+        _, message = get_api_error(
+            exc,
+            "The feedback could not be submitted.",
+        )
+        st.error(message)
+
+    except requests.RequestException:
+        st.error(
+            "Could not communicate with FastAPI. "
+            "Check that the backend is running."
+        )
+
+    else:
+        st.session_state[f"feedback_{interaction_id}"] = selected_feedback
+        st.success("Thank you—your feedback was saved.")
 def render_question_answer() -> None:
     """Render the grounded question-answer interface."""
     st.subheader("Ask a question")
@@ -173,30 +260,34 @@ def render_question_answer() -> None:
             type="primary",
         )
 
-    if not submitted:
-        return
+        result = st.session_state.get("latest_answer")
 
-    if not question.strip():
-        st.warning("Enter a question before submitting.")
-        return
+    if submitted:
+        if not question.strip():
+            st.warning("Enter a question before submitting.")
+            return
 
-    try:
-        with st.spinner("Searching the manual and generating an answer..."):
-            result = ask_question(question.strip())
+        try:
+            with st.spinner("Searching the manual and generating an answer..."):
+                result = ask_question(question.strip())
+                st.session_state["latest_answer"] = result
 
-    except requests.HTTPError as exc:
-        _, message = get_api_error(
-            exc,
-            "The question could not be answered.",
-        )
-        st.error(message)
-        return
+        except requests.HTTPError as exc:
+            _, message = get_api_error(
+                exc,
+                "The question could not be answered.",
+            )
+            st.error(message)
+            return
 
-    except requests.RequestException:
-        st.error(
-            "Could not communicate with FastAPI. "
-            "Check that the backend and Ollama are running."
-        )
+        except requests.RequestException:
+            st.error(
+                "Could not communicate with FastAPI. "
+                "Check that the backend and Ollama are running."
+            )
+            return
+
+    if result is None:
         return
 
     st.markdown("#### Answer")
@@ -229,6 +320,60 @@ def render_question_answer() -> None:
                     f"page {citation['page_label']}"
                 )
                 st.write(citation["excerpt"])
+
+    render_feedback_controls(result)
+
+def render_interaction_history() -> None:
+    """Render the most recent question-and-answer interactions."""
+    st.subheader("Recent question history")
+
+    try:
+        history_result = fetch_interaction_history(limit=10)
+
+    except requests.HTTPError as exc:
+        _, message = get_api_error(
+            exc,
+            "The interaction history could not be loaded.",
+        )
+        st.error(message)
+        return
+
+    except requests.RequestException:
+        st.warning("Recent question history is temporarily unavailable.")
+        return
+
+    interactions = history_result.get("interactions", [])
+
+    if not interactions:
+        st.info("No question history is available yet.")
+        return
+
+    for interaction in interactions:
+        with st.expander(interaction["question"]):
+            st.markdown("**Answer**")
+            st.write(interaction["answer"])
+
+            column_1, column_2, column_3 = st.columns(3)
+            column_1.metric("Status", interaction["status"])
+            column_2.metric(
+                "Response time",
+                f"{interaction['latency_seconds']:.3f} s",
+            )
+            column_3.metric(
+                "Feedback",
+                interaction["feedback"] or "Not submitted",
+            )
+
+            citations = interaction["citations"]
+
+            if citations:
+                st.markdown("**Citations**")
+
+                for citation in citations:
+                    st.caption(
+                        f"{citation['source_name']} - "
+                        f"page {citation['page_label']}"
+                    )
 
 
 def main() -> None:
@@ -268,6 +413,9 @@ def main() -> None:
 
     st.divider()
     render_question_answer()
+
+    st.divider()
+    render_interaction_history()
 
 
 if __name__ == "__main__":

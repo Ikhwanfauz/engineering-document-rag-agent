@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sqlite3
 import hashlib
 import time
 from pathlib import Path
@@ -10,8 +11,12 @@ from uuid import uuid4
 
 from fastapi import FastAPI, File, HTTPException, UploadFile, status
 from pydantic import BaseModel
-from database.db import CitationReference, store_interaction
-
+from database.db import (
+    CitationReference,
+    list_recent_interactions,
+    store_feedback,
+    store_interaction,
+)
 from src.document_loader import PDFIngestionError, load_pdf
 from src.embedding_manager import EmbeddingConfig, EmbeddingManager
 from src.llm_provider import LLMServiceError, OllamaLLMProvider
@@ -75,6 +80,44 @@ class QuestionRequest(BaseModel):
     top_k: int = DEFAULT_TOP_K
     minimum_similarity: float = DEFAULT_MINIMUM_SIMILARITY
 
+class FeedbackRequest(BaseModel):
+    """Positive or negative feedback for one interaction."""
+
+    feedback: str
+
+class SubmittedFeedback(BaseModel):
+    """Confirmation returned after feedback is stored."""
+
+    feedback_id: int
+    interaction_id: int
+    feedback: str
+
+class HistoryCitation(BaseModel):
+    """Citation stored with one interaction history record."""
+
+    document_id: str
+    source_name: str
+    page_number: int
+    page_label: str
+
+class HistoryInteraction(BaseModel):
+    """One stored question-and-answer interaction."""
+
+    interaction_id: int
+    question: str
+    answer: str
+    status: str
+    latency_seconds: float
+    created_at: str
+    citations: list[HistoryCitation]
+    feedback: str | None
+
+class InteractionHistory(BaseModel):
+    """Recent stored question-and-answer interactions."""
+
+    interactions: list[HistoryInteraction]
+    total_interactions: int
+
 
 class AnswerCitation(BaseModel):
     """Citation returned with a grounded answer."""
@@ -104,6 +147,7 @@ class RetrievedEvidence(BaseModel):
 class QuestionAnswer(BaseModel):
     """Grounded answer returned by the question-answering endpoint."""
 
+    interaction_id: int
     question: str
     answer: str
     status: str
@@ -550,7 +594,7 @@ def ask_question(request: QuestionRequest) -> QuestionAnswer:
     elapsed_seconds = time.perf_counter() - started_at
     answer_status = "ABSTAINED" if result.abstained else "ANSWERED"
 
-    store_interaction(
+    interaction_id = store_interaction(
         question=result.question,
         answer=result.answer,
         status=answer_status,
@@ -567,6 +611,7 @@ def ask_question(request: QuestionRequest) -> QuestionAnswer:
     )
 
     return QuestionAnswer(
+        interaction_id=interaction_id,
         question=result.question,
         answer=result.answer,
         status=answer_status,
@@ -575,4 +620,90 @@ def ask_question(request: QuestionRequest) -> QuestionAnswer:
         evidence=evidence,
         accepted_evidence_count=len(result.evidence),
         elapsed_seconds=round(elapsed_seconds, 3),
+    )
+
+@app.post(
+    "/interactions/{interaction_id}/feedback",
+    response_model=SubmittedFeedback,
+    status_code=status.HTTP_201_CREATED,
+    tags=["interactions"],
+)
+def submit_feedback(
+    interaction_id: int,
+    request: FeedbackRequest,
+) -> SubmittedFeedback:
+    """Store positive or negative feedback for one interaction."""
+    try:
+        feedback_id = store_feedback(
+            interaction_id=interaction_id,
+            feedback=request.feedback,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "code": "invalid_feedback",
+                "message": str(exc),
+            },
+        ) from exc
+    except sqlite3.IntegrityError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={
+                "code": "feedback_conflict",
+                "message": (
+                    "Feedback already exists or the interaction was not found."
+                ),
+            },
+        ) from exc
+
+    return SubmittedFeedback(
+        feedback_id=feedback_id,
+        interaction_id=interaction_id,
+        feedback=request.feedback,
+    )
+
+@app.get(
+    "/interactions",
+    response_model=InteractionHistory,
+    tags=["interactions"],
+)
+def get_interaction_history(limit: int = 10) -> InteractionHistory:
+    """Return the most recent question-and-answer interactions."""
+    try:
+        stored_interactions = list_recent_interactions(limit=limit)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "code": "invalid_history_limit",
+                "message": str(exc),
+            },
+        ) from exc
+
+    interactions = [
+        HistoryInteraction(
+            interaction_id=interaction.id,
+            question=interaction.question,
+            answer=interaction.answer,
+            status=interaction.status,
+            latency_seconds=interaction.latency_seconds,
+            created_at=interaction.created_at,
+            citations=[
+                HistoryCitation(
+                    document_id=citation.document_id,
+                    source_name=citation.source_name,
+                    page_number=citation.page_number,
+                    page_label=citation.page_label,
+                )
+                for citation in interaction.citations
+            ],
+            feedback=interaction.feedback,
+        )
+        for interaction in stored_interactions
+    ]
+
+    return InteractionHistory(
+        interactions=interactions,
+        total_interactions=len(interactions),
     )

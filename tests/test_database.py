@@ -11,6 +11,8 @@ from database.db import (
     get_database_path,
     get_interaction,
     initialize_database,
+    list_recent_interactions,
+    store_feedback,
     store_interaction,
 )
 
@@ -49,6 +51,7 @@ def test_initialize_database_creates_parent_directory_and_tables(
 
     assert "qa_interactions" in table_names
     assert "interaction_citations" in table_names
+    assert "interaction_feedback" in table_names
 
 
 def test_initialize_database_can_run_repeatedly(tmp_path) -> None:
@@ -139,4 +142,132 @@ def test_store_interaction_rejects_invalid_values(
             status=status,
             latency_seconds=latency_seconds,
             database_path=database_path,
+        )
+
+def test_store_feedback_links_to_interaction(tmp_path) -> None:
+    database_path = tmp_path / "interactions.db"
+    interaction_id = store_interaction(
+        question="Was this answer useful?",
+        answer="Follow the documented safety procedure.",
+        status="ANSWERED",
+        latency_seconds=0.5,
+        database_path=database_path,
+    )
+
+    feedback_id = store_feedback(
+        interaction_id=interaction_id,
+        feedback="POSITIVE",
+        database_path=database_path,
+    )
+
+    with sqlite3.connect(database_path) as connection:
+        stored_feedback = connection.execute(
+            """
+            SELECT id, interaction_id, feedback
+            FROM interaction_feedback
+            WHERE id = ?
+            """,
+            (feedback_id,),
+        ).fetchone()
+
+    assert stored_feedback == (
+        feedback_id,
+        interaction_id,
+        "POSITIVE",
+    )
+
+def test_store_feedback_rejects_invalid_value(tmp_path) -> None:
+    with pytest.raises(
+        ValueError,
+        match="feedback must be POSITIVE or NEGATIVE",
+    ):
+        store_feedback(
+            interaction_id=1,
+            feedback="MAYBE",
+            database_path=tmp_path / "interactions.db",
+        )
+
+def test_store_feedback_rejects_duplicate_submission(tmp_path) -> None:
+    database_path = tmp_path / "interactions.db"
+    interaction_id = store_interaction(
+        question="Was this answer useful?",
+        answer="Follow the documented safety procedure.",
+        status="ANSWERED",
+        latency_seconds=0.5,
+        database_path=database_path,
+    )
+
+    store_feedback(
+        interaction_id=interaction_id,
+        feedback="POSITIVE",
+        database_path=database_path,
+    )
+
+    with pytest.raises(sqlite3.IntegrityError):
+        store_feedback(
+            interaction_id=interaction_id,
+            feedback="NEGATIVE",
+            database_path=database_path,
+        )
+
+def test_store_feedback_rejects_unknown_interaction(tmp_path) -> None:
+    with pytest.raises(sqlite3.IntegrityError):
+        store_feedback(
+            interaction_id=999,
+            feedback="POSITIVE",
+            database_path=tmp_path / "interactions.db",
+        )
+
+def test_get_interaction_includes_submitted_feedback(tmp_path) -> None:
+    database_path = tmp_path / "interactions.db"
+    interaction_id = store_interaction(
+        question="Was this answer useful?",
+        answer="Follow the documented safety procedure.",
+        status="ANSWERED",
+        latency_seconds=0.5,
+        database_path=database_path,
+    )
+
+    store_feedback(
+        interaction_id=interaction_id,
+        feedback="POSITIVE",
+        database_path=database_path,
+    )
+
+    stored = get_interaction(
+        interaction_id,
+        database_path=database_path,
+    )
+
+    assert stored is not None
+    assert stored.feedback == "POSITIVE"
+
+def test_list_recent_interactions_returns_newest_first(tmp_path) -> None:
+    database_path = tmp_path / "interactions.db"
+    interaction_ids = [
+        store_interaction(
+            question=f"Question {number}",
+            answer=f"Answer {number}",
+            status="ANSWERED",
+            latency_seconds=0.5,
+            database_path=database_path,
+        )
+        for number in range(1, 4)
+    ]
+
+    recent = list_recent_interactions(
+        limit=2,
+        database_path=database_path,
+    )
+
+    assert [interaction.id for interaction in recent] == [
+        interaction_ids[2],
+        interaction_ids[1],
+    ]
+
+def test_list_recent_interactions_rejects_invalid_limit(tmp_path) -> None:
+    with pytest.raises(ValueError, match="limit must be positive"):
+        list_recent_interactions(
+            limit=0,
+            database_path=tmp_path / "interactions.db",
         )

@@ -631,3 +631,148 @@ def test_get_document_rejects_missing_document(
 
     assert response.status_code == 404
     assert response.json()["detail"]["code"] == "document_not_found"
+
+def test_submit_feedback_stores_positive_feedback(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    stored_feedback: dict[str, object] = {}
+
+    def fake_store_feedback(
+        *,
+        interaction_id: int,
+        feedback: str,
+    ) -> int:
+        stored_feedback["interaction_id"] = interaction_id
+        stored_feedback["feedback"] = feedback
+        return 7
+
+    monkeypatch.setattr(api_main, "store_feedback", fake_store_feedback)
+
+    response = client.post(
+        "/interactions/3/feedback",
+        json={"feedback": "POSITIVE"},
+    )
+
+    assert response.status_code == 201
+    assert stored_feedback == {
+        "interaction_id": 3,
+        "feedback": "POSITIVE",
+    }
+    assert response.json() == {
+        "feedback_id": 7,
+        "interaction_id": 3,
+        "feedback": "POSITIVE",
+    }
+
+def test_submit_feedback_rejects_invalid_feedback(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def fake_store_feedback(**kwargs: object) -> int:
+        raise ValueError("feedback must be POSITIVE or NEGATIVE")
+
+    monkeypatch.setattr(api_main, "store_feedback", fake_store_feedback)
+
+    response = client.post(
+        "/interactions/3/feedback",
+        json={"feedback": "MAYBE"},
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == {
+        "code": "invalid_feedback",
+        "message": "feedback must be POSITIVE or NEGATIVE",
+    }
+
+def test_submit_feedback_reports_conflict(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def fake_store_feedback(**kwargs: object) -> int:
+        raise api_main.sqlite3.IntegrityError("feedback conflict")
+
+    monkeypatch.setattr(api_main, "store_feedback", fake_store_feedback)
+
+    response = client.post(
+        "/interactions/3/feedback",
+        json={"feedback": "POSITIVE"},
+    )
+
+    assert response.status_code == 409
+    assert response.json()["detail"] == {
+        "code": "feedback_conflict",
+        "message": (
+            "Feedback already exists or the interaction was not found."
+        ),
+    }
+
+def test_interaction_history_returns_recent_records(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    stored = SimpleNamespace(
+        id=5,
+        question="How should the joint be supported?",
+        answer="Support the joint using the documented fixture.",
+        status="ANSWERED",
+        latency_seconds=1.25,
+        created_at="2026-07-26T10:00:00+00:00",
+        citations=(
+            SimpleNamespace(
+                document_id="manual-123",
+                source_name="service_manual.pdf",
+                page_number=50,
+                page_label="50",
+            ),
+        ),
+        feedback="POSITIVE",
+    )
+
+    monkeypatch.setattr(
+        api_main,
+        "list_recent_interactions",
+        lambda *, limit: (stored,),
+    )
+
+    response = client.get("/interactions?limit=5")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "interactions": [
+            {
+                "interaction_id": 5,
+                "question": "How should the joint be supported?",
+                "answer": "Support the joint using the documented fixture.",
+                "status": "ANSWERED",
+                "latency_seconds": 1.25,
+                "created_at": "2026-07-26T10:00:00+00:00",
+                "citations": [
+                    {
+                        "document_id": "manual-123",
+                        "source_name": "service_manual.pdf",
+                        "page_number": 50,
+                        "page_label": "50",
+                    }
+                ],
+                "feedback": "POSITIVE",
+            }
+        ],
+        "total_interactions": 1,
+    }
+
+def test_interaction_history_rejects_invalid_limit(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def fake_list_recent_interactions(*, limit: int) -> tuple[object, ...]:
+        raise ValueError("limit must be positive")
+
+    monkeypatch.setattr(
+        api_main,
+        "list_recent_interactions",
+        fake_list_recent_interactions,
+    )
+
+    response = client.get("/interactions?limit=0")
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == {
+        "code": "invalid_history_limit",
+        "message": "limit must be positive",
+    }

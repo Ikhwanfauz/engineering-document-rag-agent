@@ -28,3 +28,17 @@ CREATE TABLE IF NOT EXISTS interaction_citations (
 CREATE INDEX IF NOT EXISTS idx_interaction_citations_interaction_id
 ON interaction_citations (interaction_id);
 
+CREATE TABLE IF NOT EXISTS interaction_feedback (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    interaction_id INTEGER NOT NULL UNIQUE,
+    feedback TEXT NOT NULL CHECK (
+        feedback IN ('POSITIVE', 'NEGATIVE')
+    ),
+    created_at TEXT NOT NULL DEFAULT (
+        strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+    ),
+    FOREIGN KEY (interaction_id)
+        REFERENCES qa_interactions (id)
+        ON DELETE CASCADE
+);
+

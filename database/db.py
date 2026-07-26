@@ -34,6 +34,16 @@ class StoredInteraction:
     latency_seconds: float
     created_at: str
     citations: tuple[CitationReference, ...]
+    feedback: str | None = None
+
+@dataclass(frozen=True, slots=True)
+class StoredFeedback:
+    """Feedback linked to one question-answering interaction."""
+
+    id: int
+    interaction_id: int
+    feedback: str
+    created_at: str
 
 
 def get_database_path(database_path: str | Path | None = None) -> Path:
@@ -141,19 +151,24 @@ def get_interaction(
     with sqlite3.connect(resolved_path) as connection:
         connection.row_factory = sqlite3.Row
         interaction = connection.execute(
-            """
-            SELECT
-                id,
-                question,
-                answer,
-                status,
-                latency_seconds,
-                created_at
-            FROM qa_interactions
-            WHERE id = ?
-            """,
-            (interaction_id,),
-        ).fetchone()
+    """
+    SELECT
+        id,
+        question,
+        answer,
+        status,
+        latency_seconds,
+        created_at,
+        (
+            SELECT feedback
+            FROM interaction_feedback
+            WHERE interaction_id = qa_interactions.id
+        ) AS feedback
+    FROM qa_interactions
+    WHERE id = ?
+    """,
+    (interaction_id,),
+).fetchone()
 
         if interaction is None:
             return None
@@ -190,4 +205,79 @@ def get_interaction(
         latency_seconds=interaction["latency_seconds"],
         created_at=interaction["created_at"],
         citations=citations,
+        feedback=interaction["feedback"],
+    )
+
+def store_feedback(
+    *,
+    interaction_id: int,
+    feedback: str,
+    database_path: str | Path | None = None,
+) -> int:
+    """Store feedback for one interaction and return its database ID."""
+    if interaction_id < 1:
+        raise ValueError("interaction_id must be positive")
+    if feedback not in {"POSITIVE", "NEGATIVE"}:
+        raise ValueError("feedback must be POSITIVE or NEGATIVE")
+
+    resolved_path = initialize_database(database_path)
+
+    with sqlite3.connect(resolved_path) as connection:
+        connection.execute("PRAGMA foreign_keys = ON")
+
+        cursor = connection.execute(
+            """
+            INSERT INTO interaction_feedback (
+                interaction_id,
+                feedback
+            )
+            VALUES (?, ?)
+            """,
+            (interaction_id, feedback),
+        )
+
+        feedback_id = cursor.lastrowid
+
+        if feedback_id is None:
+            raise RuntimeError("SQLite did not return a feedback ID")
+
+    return feedback_id
+
+def list_recent_interactions(
+    *,
+    limit: int = 10,
+    database_path: str | Path | None = None,
+) -> tuple[StoredInteraction, ...]:
+    """Retrieve the most recent interactions, newest first."""
+    if limit < 1:
+        raise ValueError("limit must be positive")
+
+    resolved_path = initialize_database(database_path)
+
+    with sqlite3.connect(resolved_path) as connection:
+        interaction_ids = [
+            row[0]
+            for row in connection.execute(
+                """
+                SELECT id
+                FROM qa_interactions
+                ORDER BY created_at DESC, id DESC
+                LIMIT ?
+                """,
+                (limit,),
+            )
+        ]
+
+    interactions = (
+        get_interaction(
+            interaction_id,
+            database_path=resolved_path,
+        )
+        for interaction_id in interaction_ids
+    )
+
+    return tuple(
+        interaction
+        for interaction in interactions
+        if interaction is not None
     )
