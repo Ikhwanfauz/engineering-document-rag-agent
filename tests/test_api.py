@@ -3,6 +3,7 @@
 from pathlib import Path
 from types import SimpleNamespace
 
+import sqlite3
 import pymupdf
 import pytest
 from fastapi.testclient import TestClient
@@ -423,6 +424,56 @@ def test_ask_endpoint_returns_grounded_answer(
     assert response.json()["citations"][0]["page_label"] == "50"
     assert response.json()["citations"][0]["label"] == "manual.pdf, page 50"
     assert response.json()["elapsed_seconds"] >= 0
+
+
+def test_ask_endpoint_returns_answer_when_database_logging_fails(
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    monkeypatch.setattr(api_main, "EmbeddingManager", FakeEmbeddingManager)
+    monkeypatch.setattr(api_main, "VectorStoreManager", FakeVectorStoreManager)
+    monkeypatch.setattr(api_main, "DocumentRetriever", FakeDocumentRetriever)
+    monkeypatch.setattr(api_main, "OllamaLLMProvider", FakeLLMProvider)
+    monkeypatch.setattr(api_main, "RAGPipeline", FakeAnsweredRAGPipeline)
+
+    def raise_database_error(**_: object) -> int:
+        raise sqlite3.OperationalError("database unavailable")
+
+    monkeypatch.setattr(
+        api_main,
+        "store_interaction",
+        raise_database_error,
+    )
+    caplog.set_level("WARNING", logger=api_main.__name__)
+
+    response = client.post(
+        "/questions/ask",
+        json={
+            "question": "What must be done before removing the clamp?",
+            "document_id": "a" * 64,
+            "top_k": 3,
+            "minimum_similarity": 0.60,
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["interaction_id"] is None
+    assert response.json()["answer"] == (
+        "The joint must be supported before removing the clamp."
+    )
+    assert response.json()["status"] == "ANSWERED"
+    assert response.json()["abstained"] is False
+    assert (
+        "Database logging failed; returning answer without interaction ID."
+        in caplog.text
+    )
+    assert "What must be done before removing the clamp?" not in caplog.text
+    assert (
+        "The joint must be supported before removing the clamp."
+        not in caplog.text
+    )
+    assert "Support the joint before removing the clamp." not in caplog.text
+    assert "database unavailable" not in caplog.text
 
 
 def test_ask_endpoint_returns_abstained_answer(

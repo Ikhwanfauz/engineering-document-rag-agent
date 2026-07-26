@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import sqlite3
 import hashlib
+import logging
 import time
 from pathlib import Path
 from typing import Annotated
@@ -28,6 +29,8 @@ from src.rag_pipeline import (
 from src.retriever import DocumentRetriever
 from src.text_chunker import ChunkingConfig, compute_document_id, process_document
 from src.vector_store import VectorStoreConfig, VectorStoreManager
+
+logger = logging.getLogger(__name__)
 
 UPLOAD_DIRECTORY = Path("data/manuals")
 MAX_UPLOAD_SIZE_BYTES = 25 * 1024 * 1024
@@ -147,7 +150,7 @@ class RetrievedEvidence(BaseModel):
 class QuestionAnswer(BaseModel):
     """Grounded answer returned by the question-answering endpoint."""
 
-    interaction_id: int
+    interaction_id: int | None
     question: str
     answer: str
     status: str
@@ -594,21 +597,28 @@ def ask_question(request: QuestionRequest) -> QuestionAnswer:
     elapsed_seconds = time.perf_counter() - started_at
     answer_status = "ABSTAINED" if result.abstained else "ANSWERED"
 
-    interaction_id = store_interaction(
-        question=result.question,
-        answer=result.answer,
-        status=answer_status,
-        latency_seconds=elapsed_seconds,
-        citations=(
-            CitationReference(
-                document_id=citation.document_id,
-                source_name=citation.source_name,
-                page_number=citation.page_number,
-                page_label=citation.page_label,
-            )
-            for citation in result.citations
-        ),
-    )
+    try:
+        interaction_id = store_interaction(
+            question=result.question,
+            answer=result.answer,
+            status=answer_status,
+            latency_seconds=elapsed_seconds,
+            citations=(
+                CitationReference(
+                    document_id=citation.document_id,
+                    source_name=citation.source_name,
+                    page_number=citation.page_number,
+                    page_label=citation.page_label,
+                )
+                for citation in result.citations
+            ),
+        )
+
+    except sqlite3.Error:
+        logger.warning(
+            "Database logging failed; returning answer without interaction ID."
+        )
+        interaction_id = None
 
     return QuestionAnswer(
         interaction_id=interaction_id,
