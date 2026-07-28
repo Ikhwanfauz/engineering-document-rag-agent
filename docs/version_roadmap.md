@@ -303,13 +303,18 @@ Completion condition:
 - Added Version 7A documentation in `docs/evaluation_dataset.md`.
 - Verified successfully with 6 focused tests, 112 full-project tests, and Ruff.
 
-### Version 7B — Retrieval evaluation
+### Version 7B — Retrieval evaluation ✅
 
-- Measure retrieval hit rate.
-- Measure expected-page recall at different top-k values.
-- Compare similarity thresholds.
-- Identify common retrieval failures.
-- Save machine-readable evaluation results.
+- Added reusable retrieval metrics in `evaluation/metrics.py`.
+- Measured retrieval hit rate and expected-page recall.
+- Evaluated top-k values of `1`, `3`, and `5`.
+- Compared similarity thresholds of none, `0.50`, `0.60`, and `0.70`.
+- Identified common retrieval failures.
+- Saved machine-readable results in `evaluation/results/retrieval_evaluation.json`.
+- Added focused automated tests.
+- Added documentation in `docs/retrieval_evaluation.md`.
+- Recommended `top_k=3` with similarity threshold `0.60`.
+- Achieved `100%` hit rate and `100%` expected-page recall with the recommended configuration.
 
 ### Version 7C — Answer and abstention evaluation
 

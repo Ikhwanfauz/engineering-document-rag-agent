@@ -1,0 +1,1914 @@
+{
+  "schema_version": "1.0",
+  "evaluation_version": "7B",
+  "generated_at_utc": "2026-07-28T06:00:41.045095+00:00",
+  "dataset": {
+    "path": "evaluation\\evaluation_dataset.json",
+    "schema_version": "1.0",
+    "dataset_version": "7A"
+  },
+  "retrieval_configuration": {
+    "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+    "collection": "engineering_documents",
+    "top_k_values": [
+      1,
+      3,
+      5
+    ],
+    "similarity_thresholds": [
+      null,
+      0.5,
+      0.6,
+      0.7
+    ]
+  },
+  "answerable_question_count": 4,
+  "elapsed_seconds": 8.048228299972834,
+  "common_retrieval_failures": {
+    "expected_page_below_similarity_threshold": 6,
+    "expected_page_outside_top_k": 4
+  },
+  "configurations": [
+    {
+      "top_k": 1,
+      "similarity_threshold": null,
+      "aggregate_metrics": {
+        "question_count": 4,
+        "hit_count": 3,
+        "hit_rate": 0.75,
+        "expected_page_count": 4,
+        "matched_page_count": 3,
+        "expected_page_recall": 0.75
+      },
+      "failure_counts": {
+        "expected_page_outside_top_k": 1
+      },
+      "cases": [
+        {
+          "id": "clamp_joint_support",
+          "question": "How should the joint be supported when removing the clamp?",
+          "expected_documents": [
+            "e-Series_Service_Manual_en.pdf"
+          ],
+          "expected_pages": [
+            50
+          ],
+          "metrics": {
+            "hit": true,
+            "retrieved_chunks": 1,
+            "expected_pages": 1,
+            "matched_pages": 1,
+            "expected_page_recall": 1.0,
+            "highest_similarity": 0.8432654738426208
+          },
+          "failure_reason": null,
+          "retrieved_results": [
+            {
+              "chunk_id": "8ef80f60473ca2bf1185ce5e47dbaaf154a85ae3f73e4f73cf4da2511e84834e",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 50,
+              "page_label": "50",
+              "similarity_score": 0.8432654738426208
+            }
+          ]
+        },
+        {
+          "id": "esd_handling",
+          "question": "How should ESD-sensitive parts be handled?",
+          "expected_documents": [
+            "e-Series_Service_Manual_en.pdf"
+          ],
+          "expected_pages": [
+            13
+          ],
+          "metrics": {
+            "hit": false,
+            "retrieved_chunks": 1,
+            "expected_pages": 1,
+            "matched_pages": 0,
+            "expected_page_recall": 0.0,
+            "highest_similarity": 0.7982608079910278
+          },
+          "failure_reason": "expected_page_outside_top_k",
+          "retrieved_results": [
+            {
+              "chunk_id": "96526f8c50ccb18f9cfc74cbbb46c234b36fcb48c20a5202b7cf3cb1eb28efab",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 16,
+              "page_label": "16",
+              "similarity_score": 0.7982608079910278
+            }
+          ]
+        },
+        {
+          "id": "clamp_seals_and_rings",
+          "question": "Which seals and rings should be replaced when assembling a clamp connection?",
+          "expected_documents": [
+            "e-Series_Service_Manual_en.pdf"
+          ],
+          "expected_pages": [
+            51
+          ],
+          "metrics": {
+            "hit": true,
+            "retrieved_chunks": 1,
+            "expected_pages": 1,
+            "matched_pages": 1,
+            "expected_page_recall": 1.0,
+            "highest_similarity": 0.6732203960418701
+          },
+          "failure_reason": null,
+          "retrieved_results": [
+            {
+              "chunk_id": "84d491af09018c61f64dfe3ef7097f486d26080b9bc4e7bf16c743e44001d6fb",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 51,
+              "page_label": "51",
+              "similarity_score": 0.6732203960418701
+            }
+          ]
+        },
+        {
+          "id": "blue_lid_removal",
+          "question": "How is the blue lid removed before disassembling a clamp connection?",
+          "expected_documents": [
+            "e-Series_Service_Manual_en.pdf"
+          ],
+          "expected_pages": [
+            49
+          ],
+          "metrics": {
+            "hit": true,
+            "retrieved_chunks": 1,
+            "expected_pages": 1,
+            "matched_pages": 1,
+            "expected_page_recall": 1.0,
+            "highest_similarity": 0.6958807706832886
+          },
+          "failure_reason": null,
+          "retrieved_results": [
+            {
+              "chunk_id": "cbed89d0843506afc293b72205f958e15e1018ca19c413fab0045b92aa0b3012",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 49,
+              "page_label": "49",
+              "similarity_score": 0.6958807706832886
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "top_k": 1,
+      "similarity_threshold": 0.5,
+      "aggregate_metrics": {
+        "question_count": 4,
+        "hit_count": 3,
+        "hit_rate": 0.75,
+        "expected_page_count": 4,
+        "matched_page_count": 3,
+        "expected_page_recall": 0.75
+      },
+      "failure_counts": {
+        "expected_page_outside_top_k": 1
+      },
+      "cases": [
+        {
+          "id": "clamp_joint_support",
+          "question": "How should the joint be supported when removing the clamp?",
+          "expected_documents": [
+            "e-Series_Service_Manual_en.pdf"
+          ],
+          "expected_pages": [
+            50
+          ],
+          "metrics": {
+            "hit": true,
+            "retrieved_chunks": 1,
+            "expected_pages": 1,
+            "matched_pages": 1,
+            "expected_page_recall": 1.0,
+            "highest_similarity": 0.8432654738426208
+          },
+          "failure_reason": null,
+          "retrieved_results": [
+            {
+              "chunk_id": "8ef80f60473ca2bf1185ce5e47dbaaf154a85ae3f73e4f73cf4da2511e84834e",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 50,
+              "page_label": "50",
+              "similarity_score": 0.8432654738426208
+            }
+          ]
+        },
+        {
+          "id": "esd_handling",
+          "question": "How should ESD-sensitive parts be handled?",
+          "expected_documents": [
+            "e-Series_Service_Manual_en.pdf"
+          ],
+          "expected_pages": [
+            13
+          ],
+          "metrics": {
+            "hit": false,
+            "retrieved_chunks": 1,
+            "expected_pages": 1,
+            "matched_pages": 0,
+            "expected_page_recall": 0.0,
+            "highest_similarity": 0.7982608079910278
+          },
+          "failure_reason": "expected_page_outside_top_k",
+          "retrieved_results": [
+            {
+              "chunk_id": "96526f8c50ccb18f9cfc74cbbb46c234b36fcb48c20a5202b7cf3cb1eb28efab",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 16,
+              "page_label": "16",
+              "similarity_score": 0.7982608079910278
+            }
+          ]
+        },
+        {
+          "id": "clamp_seals_and_rings",
+          "question": "Which seals and rings should be replaced when assembling a clamp connection?",
+          "expected_documents": [
+            "e-Series_Service_Manual_en.pdf"
+          ],
+          "expected_pages": [
+            51
+          ],
+          "metrics": {
+            "hit": true,
+            "retrieved_chunks": 1,
+            "expected_pages": 1,
+            "matched_pages": 1,
+            "expected_page_recall": 1.0,
+            "highest_similarity": 0.6732203960418701
+          },
+          "failure_reason": null,
+          "retrieved_results": [
+            {
+              "chunk_id": "84d491af09018c61f64dfe3ef7097f486d26080b9bc4e7bf16c743e44001d6fb",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 51,
+              "page_label": "51",
+              "similarity_score": 0.6732203960418701
+            }
+          ]
+        },
+        {
+          "id": "blue_lid_removal",
+          "question": "How is the blue lid removed before disassembling a clamp connection?",
+          "expected_documents": [
+            "e-Series_Service_Manual_en.pdf"
+          ],
+          "expected_pages": [
+            49
+          ],
+          "metrics": {
+            "hit": true,
+            "retrieved_chunks": 1,
+            "expected_pages": 1,
+            "matched_pages": 1,
+            "expected_page_recall": 1.0,
+            "highest_similarity": 0.6958807706832886
+          },
+          "failure_reason": null,
+          "retrieved_results": [
+            {
+              "chunk_id": "cbed89d0843506afc293b72205f958e15e1018ca19c413fab0045b92aa0b3012",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 49,
+              "page_label": "49",
+              "similarity_score": 0.6958807706832886
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "top_k": 1,
+      "similarity_threshold": 0.6,
+      "aggregate_metrics": {
+        "question_count": 4,
+        "hit_count": 3,
+        "hit_rate": 0.75,
+        "expected_page_count": 4,
+        "matched_page_count": 3,
+        "expected_page_recall": 0.75
+      },
+      "failure_counts": {
+        "expected_page_outside_top_k": 1
+      },
+      "cases": [
+        {
+          "id": "clamp_joint_support",
+          "question": "How should the joint be supported when removing the clamp?",
+          "expected_documents": [
+            "e-Series_Service_Manual_en.pdf"
+          ],
+          "expected_pages": [
+            50
+          ],
+          "metrics": {
+            "hit": true,
+            "retrieved_chunks": 1,
+            "expected_pages": 1,
+            "matched_pages": 1,
+            "expected_page_recall": 1.0,
+            "highest_similarity": 0.8432654738426208
+          },
+          "failure_reason": null,
+          "retrieved_results": [
+            {
+              "chunk_id": "8ef80f60473ca2bf1185ce5e47dbaaf154a85ae3f73e4f73cf4da2511e84834e",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 50,
+              "page_label": "50",
+              "similarity_score": 0.8432654738426208
+            }
+          ]
+        },
+        {
+          "id": "esd_handling",
+          "question": "How should ESD-sensitive parts be handled?",
+          "expected_documents": [
+            "e-Series_Service_Manual_en.pdf"
+          ],
+          "expected_pages": [
+            13
+          ],
+          "metrics": {
+            "hit": false,
+            "retrieved_chunks": 1,
+            "expected_pages": 1,
+            "matched_pages": 0,
+            "expected_page_recall": 0.0,
+            "highest_similarity": 0.7982608079910278
+          },
+          "failure_reason": "expected_page_outside_top_k",
+          "retrieved_results": [
+            {
+              "chunk_id": "96526f8c50ccb18f9cfc74cbbb46c234b36fcb48c20a5202b7cf3cb1eb28efab",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 16,
+              "page_label": "16",
+              "similarity_score": 0.7982608079910278
+            }
+          ]
+        },
+        {
+          "id": "clamp_seals_and_rings",
+          "question": "Which seals and rings should be replaced when assembling a clamp connection?",
+          "expected_documents": [
+            "e-Series_Service_Manual_en.pdf"
+          ],
+          "expected_pages": [
+            51
+          ],
+          "metrics": {
+            "hit": true,
+            "retrieved_chunks": 1,
+            "expected_pages": 1,
+            "matched_pages": 1,
+            "expected_page_recall": 1.0,
+            "highest_similarity": 0.6732203960418701
+          },
+          "failure_reason": null,
+          "retrieved_results": [
+            {
+              "chunk_id": "84d491af09018c61f64dfe3ef7097f486d26080b9bc4e7bf16c743e44001d6fb",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 51,
+              "page_label": "51",
+              "similarity_score": 0.6732203960418701
+            }
+          ]
+        },
+        {
+          "id": "blue_lid_removal",
+          "question": "How is the blue lid removed before disassembling a clamp connection?",
+          "expected_documents": [
+            "e-Series_Service_Manual_en.pdf"
+          ],
+          "expected_pages": [
+            49
+          ],
+          "metrics": {
+            "hit": true,
+            "retrieved_chunks": 1,
+            "expected_pages": 1,
+            "matched_pages": 1,
+            "expected_page_recall": 1.0,
+            "highest_similarity": 0.6958807706832886
+          },
+          "failure_reason": null,
+          "retrieved_results": [
+            {
+              "chunk_id": "cbed89d0843506afc293b72205f958e15e1018ca19c413fab0045b92aa0b3012",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 49,
+              "page_label": "49",
+              "similarity_score": 0.6958807706832886
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "top_k": 1,
+      "similarity_threshold": 0.7,
+      "aggregate_metrics": {
+        "question_count": 4,
+        "hit_count": 1,
+        "hit_rate": 0.25,
+        "expected_page_count": 4,
+        "matched_page_count": 1,
+        "expected_page_recall": 0.25
+      },
+      "failure_counts": {
+        "expected_page_outside_top_k": 1,
+        "expected_page_below_similarity_threshold": 2
+      },
+      "cases": [
+        {
+          "id": "clamp_joint_support",
+          "question": "How should the joint be supported when removing the clamp?",
+          "expected_documents": [
+            "e-Series_Service_Manual_en.pdf"
+          ],
+          "expected_pages": [
+            50
+          ],
+          "metrics": {
+            "hit": true,
+            "retrieved_chunks": 1,
+            "expected_pages": 1,
+            "matched_pages": 1,
+            "expected_page_recall": 1.0,
+            "highest_similarity": 0.8432654738426208
+          },
+          "failure_reason": null,
+          "retrieved_results": [
+            {
+              "chunk_id": "8ef80f60473ca2bf1185ce5e47dbaaf154a85ae3f73e4f73cf4da2511e84834e",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 50,
+              "page_label": "50",
+              "similarity_score": 0.8432654738426208
+            }
+          ]
+        },
+        {
+          "id": "esd_handling",
+          "question": "How should ESD-sensitive parts be handled?",
+          "expected_documents": [
+            "e-Series_Service_Manual_en.pdf"
+          ],
+          "expected_pages": [
+            13
+          ],
+          "metrics": {
+            "hit": false,
+            "retrieved_chunks": 1,
+            "expected_pages": 1,
+            "matched_pages": 0,
+            "expected_page_recall": 0.0,
+            "highest_similarity": 0.7982608079910278
+          },
+          "failure_reason": "expected_page_outside_top_k",
+          "retrieved_results": [
+            {
+              "chunk_id": "96526f8c50ccb18f9cfc74cbbb46c234b36fcb48c20a5202b7cf3cb1eb28efab",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 16,
+              "page_label": "16",
+              "similarity_score": 0.7982608079910278
+            }
+          ]
+        },
+        {
+          "id": "clamp_seals_and_rings",
+          "question": "Which seals and rings should be replaced when assembling a clamp connection?",
+          "expected_documents": [
+            "e-Series_Service_Manual_en.pdf"
+          ],
+          "expected_pages": [
+            51
+          ],
+          "metrics": {
+            "hit": false,
+            "retrieved_chunks": 0,
+            "expected_pages": 1,
+            "matched_pages": 0,
+            "expected_page_recall": 0.0,
+            "highest_similarity": null
+          },
+          "failure_reason": "expected_page_below_similarity_threshold",
+          "retrieved_results": []
+        },
+        {
+          "id": "blue_lid_removal",
+          "question": "How is the blue lid removed before disassembling a clamp connection?",
+          "expected_documents": [
+            "e-Series_Service_Manual_en.pdf"
+          ],
+          "expected_pages": [
+            49
+          ],
+          "metrics": {
+            "hit": false,
+            "retrieved_chunks": 0,
+            "expected_pages": 1,
+            "matched_pages": 0,
+            "expected_page_recall": 0.0,
+            "highest_similarity": null
+          },
+          "failure_reason": "expected_page_below_similarity_threshold",
+          "retrieved_results": []
+        }
+      ]
+    },
+    {
+      "top_k": 3,
+      "similarity_threshold": null,
+      "aggregate_metrics": {
+        "question_count": 4,
+        "hit_count": 4,
+        "hit_rate": 1.0,
+        "expected_page_count": 4,
+        "matched_page_count": 4,
+        "expected_page_recall": 1.0
+      },
+      "failure_counts": {},
+      "cases": [
+        {
+          "id": "clamp_joint_support",
+          "question": "How should the joint be supported when removing the clamp?",
+          "expected_documents": [
+            "e-Series_Service_Manual_en.pdf"
+          ],
+          "expected_pages": [
+            50
+          ],
+          "metrics": {
+            "hit": true,
+            "retrieved_chunks": 3,
+            "expected_pages": 1,
+            "matched_pages": 1,
+            "expected_page_recall": 1.0,
+            "highest_similarity": 0.8432654738426208
+          },
+          "failure_reason": null,
+          "retrieved_results": [
+            {
+              "chunk_id": "8ef80f60473ca2bf1185ce5e47dbaaf154a85ae3f73e4f73cf4da2511e84834e",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 50,
+              "page_label": "50",
+              "similarity_score": 0.8432654738426208
+            },
+            {
+              "chunk_id": "cbed89d0843506afc293b72205f958e15e1018ca19c413fab0045b92aa0b3012",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 49,
+              "page_label": "49",
+              "similarity_score": 0.6381306052207947
+            },
+            {
+              "chunk_id": "84d491af09018c61f64dfe3ef7097f486d26080b9bc4e7bf16c743e44001d6fb",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 51,
+              "page_label": "51",
+              "similarity_score": 0.5684149861335754
+            }
+          ]
+        },
+        {
+          "id": "esd_handling",
+          "question": "How should ESD-sensitive parts be handled?",
+          "expected_documents": [
+            "e-Series_Service_Manual_en.pdf"
+          ],
+          "expected_pages": [
+            13
+          ],
+          "metrics": {
+            "hit": true,
+            "retrieved_chunks": 3,
+            "expected_pages": 1,
+            "matched_pages": 1,
+            "expected_page_recall": 1.0,
+            "highest_similarity": 0.7982608079910278
+          },
+          "failure_reason": null,
+          "retrieved_results": [
+            {
+              "chunk_id": "96526f8c50ccb18f9cfc74cbbb46c234b36fcb48c20a5202b7cf3cb1eb28efab",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 16,
+              "page_label": "16",
+              "similarity_score": 0.7982608079910278
+            },
+            {
+              "chunk_id": "bd6c7555e942697e82ec8fc6a422d942e2b4fcbfa0c967e3a658107e9fda4eab",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 13,
+              "page_label": "13",
+              "similarity_score": 0.7878173589706421
+            },
+            {
+              "chunk_id": "db5160f8e526e6520d432dbc8ff31c378b626ba943e598c962973708238f332b",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 15,
+              "page_label": "15",
+              "similarity_score": 0.7700650691986084
+            }
+          ]
+        },
+        {
+          "id": "clamp_seals_and_rings",
+          "question": "Which seals and rings should be replaced when assembling a clamp connection?",
+          "expected_documents": [
+            "e-Series_Service_Manual_en.pdf"
+          ],
+          "expected_pages": [
+            51
+          ],
+          "metrics": {
+            "hit": true,
+            "retrieved_chunks": 3,
+            "expected_pages": 1,
+            "matched_pages": 1,
+            "expected_page_recall": 1.0,
+            "highest_similarity": 0.6732203960418701
+          },
+          "failure_reason": null,
+          "retrieved_results": [
+            {
+              "chunk_id": "84d491af09018c61f64dfe3ef7097f486d26080b9bc4e7bf16c743e44001d6fb",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 51,
+              "page_label": "51",
+              "similarity_score": 0.6732203960418701
+            },
+            {
+              "chunk_id": "cbed89d0843506afc293b72205f958e15e1018ca19c413fab0045b92aa0b3012",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 49,
+              "page_label": "49",
+              "similarity_score": 0.5174714922904968
+            },
+            {
+              "chunk_id": "5e94b2461fc085b7be68d8641cea2740aafa28b8b0fba076e552135dd6756b26",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 32,
+              "page_label": "32",
+              "similarity_score": 0.48169153928756714
+            }
+          ]
+        },
+        {
+          "id": "blue_lid_removal",
+          "question": "How is the blue lid removed before disassembling a clamp connection?",
+          "expected_documents": [
+            "e-Series_Service_Manual_en.pdf"
+          ],
+          "expected_pages": [
+            49
+          ],
+          "metrics": {
+            "hit": true,
+            "retrieved_chunks": 3,
+            "expected_pages": 1,
+            "matched_pages": 1,
+            "expected_page_recall": 1.0,
+            "highest_similarity": 0.6958807706832886
+          },
+          "failure_reason": null,
+          "retrieved_results": [
+            {
+              "chunk_id": "cbed89d0843506afc293b72205f958e15e1018ca19c413fab0045b92aa0b3012",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 49,
+              "page_label": "49",
+              "similarity_score": 0.6958807706832886
+            },
+            {
+              "chunk_id": "7a338ceffc2fc97c138d4262983c4bcd85640ae63b05be7baa2201d9868b1300",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 42,
+              "page_label": "42",
+              "similarity_score": 0.6245322823524475
+            },
+            {
+              "chunk_id": "84d491af09018c61f64dfe3ef7097f486d26080b9bc4e7bf16c743e44001d6fb",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 51,
+              "page_label": "51",
+              "similarity_score": 0.5643706321716309
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "top_k": 3,
+      "similarity_threshold": 0.5,
+      "aggregate_metrics": {
+        "question_count": 4,
+        "hit_count": 4,
+        "hit_rate": 1.0,
+        "expected_page_count": 4,
+        "matched_page_count": 4,
+        "expected_page_recall": 1.0
+      },
+      "failure_counts": {},
+      "cases": [
+        {
+          "id": "clamp_joint_support",
+          "question": "How should the joint be supported when removing the clamp?",
+          "expected_documents": [
+            "e-Series_Service_Manual_en.pdf"
+          ],
+          "expected_pages": [
+            50
+          ],
+          "metrics": {
+            "hit": true,
+            "retrieved_chunks": 3,
+            "expected_pages": 1,
+            "matched_pages": 1,
+            "expected_page_recall": 1.0,
+            "highest_similarity": 0.8432654738426208
+          },
+          "failure_reason": null,
+          "retrieved_results": [
+            {
+              "chunk_id": "8ef80f60473ca2bf1185ce5e47dbaaf154a85ae3f73e4f73cf4da2511e84834e",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 50,
+              "page_label": "50",
+              "similarity_score": 0.8432654738426208
+            },
+            {
+              "chunk_id": "cbed89d0843506afc293b72205f958e15e1018ca19c413fab0045b92aa0b3012",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 49,
+              "page_label": "49",
+              "similarity_score": 0.6381306052207947
+            },
+            {
+              "chunk_id": "84d491af09018c61f64dfe3ef7097f486d26080b9bc4e7bf16c743e44001d6fb",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 51,
+              "page_label": "51",
+              "similarity_score": 0.5684149861335754
+            }
+          ]
+        },
+        {
+          "id": "esd_handling",
+          "question": "How should ESD-sensitive parts be handled?",
+          "expected_documents": [
+            "e-Series_Service_Manual_en.pdf"
+          ],
+          "expected_pages": [
+            13
+          ],
+          "metrics": {
+            "hit": true,
+            "retrieved_chunks": 3,
+            "expected_pages": 1,
+            "matched_pages": 1,
+            "expected_page_recall": 1.0,
+            "highest_similarity": 0.7982608079910278
+          },
+          "failure_reason": null,
+          "retrieved_results": [
+            {
+              "chunk_id": "96526f8c50ccb18f9cfc74cbbb46c234b36fcb48c20a5202b7cf3cb1eb28efab",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 16,
+              "page_label": "16",
+              "similarity_score": 0.7982608079910278
+            },
+            {
+              "chunk_id": "bd6c7555e942697e82ec8fc6a422d942e2b4fcbfa0c967e3a658107e9fda4eab",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 13,
+              "page_label": "13",
+              "similarity_score": 0.7878173589706421
+            },
+            {
+              "chunk_id": "db5160f8e526e6520d432dbc8ff31c378b626ba943e598c962973708238f332b",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 15,
+              "page_label": "15",
+              "similarity_score": 0.7700650691986084
+            }
+          ]
+        },
+        {
+          "id": "clamp_seals_and_rings",
+          "question": "Which seals and rings should be replaced when assembling a clamp connection?",
+          "expected_documents": [
+            "e-Series_Service_Manual_en.pdf"
+          ],
+          "expected_pages": [
+            51
+          ],
+          "metrics": {
+            "hit": true,
+            "retrieved_chunks": 2,
+            "expected_pages": 1,
+            "matched_pages": 1,
+            "expected_page_recall": 1.0,
+            "highest_similarity": 0.6732203960418701
+          },
+          "failure_reason": null,
+          "retrieved_results": [
+            {
+              "chunk_id": "84d491af09018c61f64dfe3ef7097f486d26080b9bc4e7bf16c743e44001d6fb",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 51,
+              "page_label": "51",
+              "similarity_score": 0.6732203960418701
+            },
+            {
+              "chunk_id": "cbed89d0843506afc293b72205f958e15e1018ca19c413fab0045b92aa0b3012",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 49,
+              "page_label": "49",
+              "similarity_score": 0.5174714922904968
+            }
+          ]
+        },
+        {
+          "id": "blue_lid_removal",
+          "question": "How is the blue lid removed before disassembling a clamp connection?",
+          "expected_documents": [
+            "e-Series_Service_Manual_en.pdf"
+          ],
+          "expected_pages": [
+            49
+          ],
+          "metrics": {
+            "hit": true,
+            "retrieved_chunks": 3,
+            "expected_pages": 1,
+            "matched_pages": 1,
+            "expected_page_recall": 1.0,
+            "highest_similarity": 0.6958807706832886
+          },
+          "failure_reason": null,
+          "retrieved_results": [
+            {
+              "chunk_id": "cbed89d0843506afc293b72205f958e15e1018ca19c413fab0045b92aa0b3012",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 49,
+              "page_label": "49",
+              "similarity_score": 0.6958807706832886
+            },
+            {
+              "chunk_id": "7a338ceffc2fc97c138d4262983c4bcd85640ae63b05be7baa2201d9868b1300",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 42,
+              "page_label": "42",
+              "similarity_score": 0.6245322823524475
+            },
+            {
+              "chunk_id": "84d491af09018c61f64dfe3ef7097f486d26080b9bc4e7bf16c743e44001d6fb",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 51,
+              "page_label": "51",
+              "similarity_score": 0.5643706321716309
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "top_k": 3,
+      "similarity_threshold": 0.6,
+      "aggregate_metrics": {
+        "question_count": 4,
+        "hit_count": 4,
+        "hit_rate": 1.0,
+        "expected_page_count": 4,
+        "matched_page_count": 4,
+        "expected_page_recall": 1.0
+      },
+      "failure_counts": {},
+      "cases": [
+        {
+          "id": "clamp_joint_support",
+          "question": "How should the joint be supported when removing the clamp?",
+          "expected_documents": [
+            "e-Series_Service_Manual_en.pdf"
+          ],
+          "expected_pages": [
+            50
+          ],
+          "metrics": {
+            "hit": true,
+            "retrieved_chunks": 2,
+            "expected_pages": 1,
+            "matched_pages": 1,
+            "expected_page_recall": 1.0,
+            "highest_similarity": 0.8432654738426208
+          },
+          "failure_reason": null,
+          "retrieved_results": [
+            {
+              "chunk_id": "8ef80f60473ca2bf1185ce5e47dbaaf154a85ae3f73e4f73cf4da2511e84834e",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 50,
+              "page_label": "50",
+              "similarity_score": 0.8432654738426208
+            },
+            {
+              "chunk_id": "cbed89d0843506afc293b72205f958e15e1018ca19c413fab0045b92aa0b3012",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 49,
+              "page_label": "49",
+              "similarity_score": 0.6381306052207947
+            }
+          ]
+        },
+        {
+          "id": "esd_handling",
+          "question": "How should ESD-sensitive parts be handled?",
+          "expected_documents": [
+            "e-Series_Service_Manual_en.pdf"
+          ],
+          "expected_pages": [
+            13
+          ],
+          "metrics": {
+            "hit": true,
+            "retrieved_chunks": 3,
+            "expected_pages": 1,
+            "matched_pages": 1,
+            "expected_page_recall": 1.0,
+            "highest_similarity": 0.7982608079910278
+          },
+          "failure_reason": null,
+          "retrieved_results": [
+            {
+              "chunk_id": "96526f8c50ccb18f9cfc74cbbb46c234b36fcb48c20a5202b7cf3cb1eb28efab",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 16,
+              "page_label": "16",
+              "similarity_score": 0.7982608079910278
+            },
+            {
+              "chunk_id": "bd6c7555e942697e82ec8fc6a422d942e2b4fcbfa0c967e3a658107e9fda4eab",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 13,
+              "page_label": "13",
+              "similarity_score": 0.7878173589706421
+            },
+            {
+              "chunk_id": "db5160f8e526e6520d432dbc8ff31c378b626ba943e598c962973708238f332b",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 15,
+              "page_label": "15",
+              "similarity_score": 0.7700650691986084
+            }
+          ]
+        },
+        {
+          "id": "clamp_seals_and_rings",
+          "question": "Which seals and rings should be replaced when assembling a clamp connection?",
+          "expected_documents": [
+            "e-Series_Service_Manual_en.pdf"
+          ],
+          "expected_pages": [
+            51
+          ],
+          "metrics": {
+            "hit": true,
+            "retrieved_chunks": 1,
+            "expected_pages": 1,
+            "matched_pages": 1,
+            "expected_page_recall": 1.0,
+            "highest_similarity": 0.6732203960418701
+          },
+          "failure_reason": null,
+          "retrieved_results": [
+            {
+              "chunk_id": "84d491af09018c61f64dfe3ef7097f486d26080b9bc4e7bf16c743e44001d6fb",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 51,
+              "page_label": "51",
+              "similarity_score": 0.6732203960418701
+            }
+          ]
+        },
+        {
+          "id": "blue_lid_removal",
+          "question": "How is the blue lid removed before disassembling a clamp connection?",
+          "expected_documents": [
+            "e-Series_Service_Manual_en.pdf"
+          ],
+          "expected_pages": [
+            49
+          ],
+          "metrics": {
+            "hit": true,
+            "retrieved_chunks": 2,
+            "expected_pages": 1,
+            "matched_pages": 1,
+            "expected_page_recall": 1.0,
+            "highest_similarity": 0.6958807706832886
+          },
+          "failure_reason": null,
+          "retrieved_results": [
+            {
+              "chunk_id": "cbed89d0843506afc293b72205f958e15e1018ca19c413fab0045b92aa0b3012",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 49,
+              "page_label": "49",
+              "similarity_score": 0.6958807706832886
+            },
+            {
+              "chunk_id": "7a338ceffc2fc97c138d4262983c4bcd85640ae63b05be7baa2201d9868b1300",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 42,
+              "page_label": "42",
+              "similarity_score": 0.6245322823524475
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "top_k": 3,
+      "similarity_threshold": 0.7,
+      "aggregate_metrics": {
+        "question_count": 4,
+        "hit_count": 2,
+        "hit_rate": 0.5,
+        "expected_page_count": 4,
+        "matched_page_count": 2,
+        "expected_page_recall": 0.5
+      },
+      "failure_counts": {
+        "expected_page_below_similarity_threshold": 2
+      },
+      "cases": [
+        {
+          "id": "clamp_joint_support",
+          "question": "How should the joint be supported when removing the clamp?",
+          "expected_documents": [
+            "e-Series_Service_Manual_en.pdf"
+          ],
+          "expected_pages": [
+            50
+          ],
+          "metrics": {
+            "hit": true,
+            "retrieved_chunks": 1,
+            "expected_pages": 1,
+            "matched_pages": 1,
+            "expected_page_recall": 1.0,
+            "highest_similarity": 0.8432654738426208
+          },
+          "failure_reason": null,
+          "retrieved_results": [
+            {
+              "chunk_id": "8ef80f60473ca2bf1185ce5e47dbaaf154a85ae3f73e4f73cf4da2511e84834e",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 50,
+              "page_label": "50",
+              "similarity_score": 0.8432654738426208
+            }
+          ]
+        },
+        {
+          "id": "esd_handling",
+          "question": "How should ESD-sensitive parts be handled?",
+          "expected_documents": [
+            "e-Series_Service_Manual_en.pdf"
+          ],
+          "expected_pages": [
+            13
+          ],
+          "metrics": {
+            "hit": true,
+            "retrieved_chunks": 3,
+            "expected_pages": 1,
+            "matched_pages": 1,
+            "expected_page_recall": 1.0,
+            "highest_similarity": 0.7982608079910278
+          },
+          "failure_reason": null,
+          "retrieved_results": [
+            {
+              "chunk_id": "96526f8c50ccb18f9cfc74cbbb46c234b36fcb48c20a5202b7cf3cb1eb28efab",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 16,
+              "page_label": "16",
+              "similarity_score": 0.7982608079910278
+            },
+            {
+              "chunk_id": "bd6c7555e942697e82ec8fc6a422d942e2b4fcbfa0c967e3a658107e9fda4eab",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 13,
+              "page_label": "13",
+              "similarity_score": 0.7878173589706421
+            },
+            {
+              "chunk_id": "db5160f8e526e6520d432dbc8ff31c378b626ba943e598c962973708238f332b",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 15,
+              "page_label": "15",
+              "similarity_score": 0.7700650691986084
+            }
+          ]
+        },
+        {
+          "id": "clamp_seals_and_rings",
+          "question": "Which seals and rings should be replaced when assembling a clamp connection?",
+          "expected_documents": [
+            "e-Series_Service_Manual_en.pdf"
+          ],
+          "expected_pages": [
+            51
+          ],
+          "metrics": {
+            "hit": false,
+            "retrieved_chunks": 0,
+            "expected_pages": 1,
+            "matched_pages": 0,
+            "expected_page_recall": 0.0,
+            "highest_similarity": null
+          },
+          "failure_reason": "expected_page_below_similarity_threshold",
+          "retrieved_results": []
+        },
+        {
+          "id": "blue_lid_removal",
+          "question": "How is the blue lid removed before disassembling a clamp connection?",
+          "expected_documents": [
+            "e-Series_Service_Manual_en.pdf"
+          ],
+          "expected_pages": [
+            49
+          ],
+          "metrics": {
+            "hit": false,
+            "retrieved_chunks": 0,
+            "expected_pages": 1,
+            "matched_pages": 0,
+            "expected_page_recall": 0.0,
+            "highest_similarity": null
+          },
+          "failure_reason": "expected_page_below_similarity_threshold",
+          "retrieved_results": []
+        }
+      ]
+    },
+    {
+      "top_k": 5,
+      "similarity_threshold": null,
+      "aggregate_metrics": {
+        "question_count": 4,
+        "hit_count": 4,
+        "hit_rate": 1.0,
+        "expected_page_count": 4,
+        "matched_page_count": 4,
+        "expected_page_recall": 1.0
+      },
+      "failure_counts": {},
+      "cases": [
+        {
+          "id": "clamp_joint_support",
+          "question": "How should the joint be supported when removing the clamp?",
+          "expected_documents": [
+            "e-Series_Service_Manual_en.pdf"
+          ],
+          "expected_pages": [
+            50
+          ],
+          "metrics": {
+            "hit": true,
+            "retrieved_chunks": 5,
+            "expected_pages": 1,
+            "matched_pages": 1,
+            "expected_page_recall": 1.0,
+            "highest_similarity": 0.8432654738426208
+          },
+          "failure_reason": null,
+          "retrieved_results": [
+            {
+              "chunk_id": "8ef80f60473ca2bf1185ce5e47dbaaf154a85ae3f73e4f73cf4da2511e84834e",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 50,
+              "page_label": "50",
+              "similarity_score": 0.8432654738426208
+            },
+            {
+              "chunk_id": "cbed89d0843506afc293b72205f958e15e1018ca19c413fab0045b92aa0b3012",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 49,
+              "page_label": "49",
+              "similarity_score": 0.6381306052207947
+            },
+            {
+              "chunk_id": "84d491af09018c61f64dfe3ef7097f486d26080b9bc4e7bf16c743e44001d6fb",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 51,
+              "page_label": "51",
+              "similarity_score": 0.5684149861335754
+            },
+            {
+              "chunk_id": "49d405ffac123cb9ba2730d98c3413c49b173ba9636c85e6e6c984a9ff93dd79",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 52,
+              "page_label": "52",
+              "similarity_score": 0.4798974394798279
+            },
+            {
+              "chunk_id": "5e94b2461fc085b7be68d8641cea2740aafa28b8b0fba076e552135dd6756b26",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 32,
+              "page_label": "32",
+              "similarity_score": 0.44601452350616455
+            }
+          ]
+        },
+        {
+          "id": "esd_handling",
+          "question": "How should ESD-sensitive parts be handled?",
+          "expected_documents": [
+            "e-Series_Service_Manual_en.pdf"
+          ],
+          "expected_pages": [
+            13
+          ],
+          "metrics": {
+            "hit": true,
+            "retrieved_chunks": 5,
+            "expected_pages": 1,
+            "matched_pages": 1,
+            "expected_page_recall": 1.0,
+            "highest_similarity": 0.7982608079910278
+          },
+          "failure_reason": null,
+          "retrieved_results": [
+            {
+              "chunk_id": "96526f8c50ccb18f9cfc74cbbb46c234b36fcb48c20a5202b7cf3cb1eb28efab",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 16,
+              "page_label": "16",
+              "similarity_score": 0.7982608079910278
+            },
+            {
+              "chunk_id": "bd6c7555e942697e82ec8fc6a422d942e2b4fcbfa0c967e3a658107e9fda4eab",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 13,
+              "page_label": "13",
+              "similarity_score": 0.7878173589706421
+            },
+            {
+              "chunk_id": "db5160f8e526e6520d432dbc8ff31c378b626ba943e598c962973708238f332b",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 15,
+              "page_label": "15",
+              "similarity_score": 0.7700650691986084
+            },
+            {
+              "chunk_id": "200956edf5df0126f4238e4cf2e91978b7a83630bc2b939282dbd98b9e72276f",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 10,
+              "page_label": "10",
+              "similarity_score": 0.7653116583824158
+            },
+            {
+              "chunk_id": "4768b8a632b2e044fc759fdbbbbbb28dae60626020a4b6455140a569b998e5da",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 11,
+              "page_label": "11",
+              "similarity_score": 0.7093222141265869
+            }
+          ]
+        },
+        {
+          "id": "clamp_seals_and_rings",
+          "question": "Which seals and rings should be replaced when assembling a clamp connection?",
+          "expected_documents": [
+            "e-Series_Service_Manual_en.pdf"
+          ],
+          "expected_pages": [
+            51
+          ],
+          "metrics": {
+            "hit": true,
+            "retrieved_chunks": 5,
+            "expected_pages": 1,
+            "matched_pages": 1,
+            "expected_page_recall": 1.0,
+            "highest_similarity": 0.6732203960418701
+          },
+          "failure_reason": null,
+          "retrieved_results": [
+            {
+              "chunk_id": "84d491af09018c61f64dfe3ef7097f486d26080b9bc4e7bf16c743e44001d6fb",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 51,
+              "page_label": "51",
+              "similarity_score": 0.6732203960418701
+            },
+            {
+              "chunk_id": "cbed89d0843506afc293b72205f958e15e1018ca19c413fab0045b92aa0b3012",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 49,
+              "page_label": "49",
+              "similarity_score": 0.5174714922904968
+            },
+            {
+              "chunk_id": "5e94b2461fc085b7be68d8641cea2740aafa28b8b0fba076e552135dd6756b26",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 32,
+              "page_label": "32",
+              "similarity_score": 0.48169153928756714
+            },
+            {
+              "chunk_id": "49d405ffac123cb9ba2730d98c3413c49b173ba9636c85e6e6c984a9ff93dd79",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 52,
+              "page_label": "52",
+              "similarity_score": 0.4654693007469177
+            },
+            {
+              "chunk_id": "8ef80f60473ca2bf1185ce5e47dbaaf154a85ae3f73e4f73cf4da2511e84834e",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 50,
+              "page_label": "50",
+              "similarity_score": 0.4475266933441162
+            }
+          ]
+        },
+        {
+          "id": "blue_lid_removal",
+          "question": "How is the blue lid removed before disassembling a clamp connection?",
+          "expected_documents": [
+            "e-Series_Service_Manual_en.pdf"
+          ],
+          "expected_pages": [
+            49
+          ],
+          "metrics": {
+            "hit": true,
+            "retrieved_chunks": 5,
+            "expected_pages": 1,
+            "matched_pages": 1,
+            "expected_page_recall": 1.0,
+            "highest_similarity": 0.6958807706832886
+          },
+          "failure_reason": null,
+          "retrieved_results": [
+            {
+              "chunk_id": "cbed89d0843506afc293b72205f958e15e1018ca19c413fab0045b92aa0b3012",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 49,
+              "page_label": "49",
+              "similarity_score": 0.6958807706832886
+            },
+            {
+              "chunk_id": "7a338ceffc2fc97c138d4262983c4bcd85640ae63b05be7baa2201d9868b1300",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 42,
+              "page_label": "42",
+              "similarity_score": 0.6245322823524475
+            },
+            {
+              "chunk_id": "84d491af09018c61f64dfe3ef7097f486d26080b9bc4e7bf16c743e44001d6fb",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 51,
+              "page_label": "51",
+              "similarity_score": 0.5643706321716309
+            },
+            {
+              "chunk_id": "8ef80f60473ca2bf1185ce5e47dbaaf154a85ae3f73e4f73cf4da2511e84834e",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 50,
+              "page_label": "50",
+              "similarity_score": 0.49215513467788696
+            },
+            {
+              "chunk_id": "a3fadf8e5e321180d9aad61af53ce23fc2b9257d583baafec5b34d402cc78d20",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 71,
+              "page_label": "71",
+              "similarity_score": 0.4763399362564087
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "top_k": 5,
+      "similarity_threshold": 0.5,
+      "aggregate_metrics": {
+        "question_count": 4,
+        "hit_count": 4,
+        "hit_rate": 1.0,
+        "expected_page_count": 4,
+        "matched_page_count": 4,
+        "expected_page_recall": 1.0
+      },
+      "failure_counts": {},
+      "cases": [
+        {
+          "id": "clamp_joint_support",
+          "question": "How should the joint be supported when removing the clamp?",
+          "expected_documents": [
+            "e-Series_Service_Manual_en.pdf"
+          ],
+          "expected_pages": [
+            50
+          ],
+          "metrics": {
+            "hit": true,
+            "retrieved_chunks": 3,
+            "expected_pages": 1,
+            "matched_pages": 1,
+            "expected_page_recall": 1.0,
+            "highest_similarity": 0.8432654738426208
+          },
+          "failure_reason": null,
+          "retrieved_results": [
+            {
+              "chunk_id": "8ef80f60473ca2bf1185ce5e47dbaaf154a85ae3f73e4f73cf4da2511e84834e",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 50,
+              "page_label": "50",
+              "similarity_score": 0.8432654738426208
+            },
+            {
+              "chunk_id": "cbed89d0843506afc293b72205f958e15e1018ca19c413fab0045b92aa0b3012",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 49,
+              "page_label": "49",
+              "similarity_score": 0.6381306052207947
+            },
+            {
+              "chunk_id": "84d491af09018c61f64dfe3ef7097f486d26080b9bc4e7bf16c743e44001d6fb",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 51,
+              "page_label": "51",
+              "similarity_score": 0.5684149861335754
+            }
+          ]
+        },
+        {
+          "id": "esd_handling",
+          "question": "How should ESD-sensitive parts be handled?",
+          "expected_documents": [
+            "e-Series_Service_Manual_en.pdf"
+          ],
+          "expected_pages": [
+            13
+          ],
+          "metrics": {
+            "hit": true,
+            "retrieved_chunks": 5,
+            "expected_pages": 1,
+            "matched_pages": 1,
+            "expected_page_recall": 1.0,
+            "highest_similarity": 0.7982608079910278
+          },
+          "failure_reason": null,
+          "retrieved_results": [
+            {
+              "chunk_id": "96526f8c50ccb18f9cfc74cbbb46c234b36fcb48c20a5202b7cf3cb1eb28efab",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 16,
+              "page_label": "16",
+              "similarity_score": 0.7982608079910278
+            },
+            {
+              "chunk_id": "bd6c7555e942697e82ec8fc6a422d942e2b4fcbfa0c967e3a658107e9fda4eab",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 13,
+              "page_label": "13",
+              "similarity_score": 0.7878173589706421
+            },
+            {
+              "chunk_id": "db5160f8e526e6520d432dbc8ff31c378b626ba943e598c962973708238f332b",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 15,
+              "page_label": "15",
+              "similarity_score": 0.7700650691986084
+            },
+            {
+              "chunk_id": "200956edf5df0126f4238e4cf2e91978b7a83630bc2b939282dbd98b9e72276f",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 10,
+              "page_label": "10",
+              "similarity_score": 0.7653116583824158
+            },
+            {
+              "chunk_id": "4768b8a632b2e044fc759fdbbbbbb28dae60626020a4b6455140a569b998e5da",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 11,
+              "page_label": "11",
+              "similarity_score": 0.7093222141265869
+            }
+          ]
+        },
+        {
+          "id": "clamp_seals_and_rings",
+          "question": "Which seals and rings should be replaced when assembling a clamp connection?",
+          "expected_documents": [
+            "e-Series_Service_Manual_en.pdf"
+          ],
+          "expected_pages": [
+            51
+          ],
+          "metrics": {
+            "hit": true,
+            "retrieved_chunks": 2,
+            "expected_pages": 1,
+            "matched_pages": 1,
+            "expected_page_recall": 1.0,
+            "highest_similarity": 0.6732203960418701
+          },
+          "failure_reason": null,
+          "retrieved_results": [
+            {
+              "chunk_id": "84d491af09018c61f64dfe3ef7097f486d26080b9bc4e7bf16c743e44001d6fb",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 51,
+              "page_label": "51",
+              "similarity_score": 0.6732203960418701
+            },
+            {
+              "chunk_id": "cbed89d0843506afc293b72205f958e15e1018ca19c413fab0045b92aa0b3012",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 49,
+              "page_label": "49",
+              "similarity_score": 0.5174714922904968
+            }
+          ]
+        },
+        {
+          "id": "blue_lid_removal",
+          "question": "How is the blue lid removed before disassembling a clamp connection?",
+          "expected_documents": [
+            "e-Series_Service_Manual_en.pdf"
+          ],
+          "expected_pages": [
+            49
+          ],
+          "metrics": {
+            "hit": true,
+            "retrieved_chunks": 3,
+            "expected_pages": 1,
+            "matched_pages": 1,
+            "expected_page_recall": 1.0,
+            "highest_similarity": 0.6958807706832886
+          },
+          "failure_reason": null,
+          "retrieved_results": [
+            {
+              "chunk_id": "cbed89d0843506afc293b72205f958e15e1018ca19c413fab0045b92aa0b3012",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 49,
+              "page_label": "49",
+              "similarity_score": 0.6958807706832886
+            },
+            {
+              "chunk_id": "7a338ceffc2fc97c138d4262983c4bcd85640ae63b05be7baa2201d9868b1300",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 42,
+              "page_label": "42",
+              "similarity_score": 0.6245322823524475
+            },
+            {
+              "chunk_id": "84d491af09018c61f64dfe3ef7097f486d26080b9bc4e7bf16c743e44001d6fb",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 51,
+              "page_label": "51",
+              "similarity_score": 0.5643706321716309
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "top_k": 5,
+      "similarity_threshold": 0.6,
+      "aggregate_metrics": {
+        "question_count": 4,
+        "hit_count": 4,
+        "hit_rate": 1.0,
+        "expected_page_count": 4,
+        "matched_page_count": 4,
+        "expected_page_recall": 1.0
+      },
+      "failure_counts": {},
+      "cases": [
+        {
+          "id": "clamp_joint_support",
+          "question": "How should the joint be supported when removing the clamp?",
+          "expected_documents": [
+            "e-Series_Service_Manual_en.pdf"
+          ],
+          "expected_pages": [
+            50
+          ],
+          "metrics": {
+            "hit": true,
+            "retrieved_chunks": 2,
+            "expected_pages": 1,
+            "matched_pages": 1,
+            "expected_page_recall": 1.0,
+            "highest_similarity": 0.8432654738426208
+          },
+          "failure_reason": null,
+          "retrieved_results": [
+            {
+              "chunk_id": "8ef80f60473ca2bf1185ce5e47dbaaf154a85ae3f73e4f73cf4da2511e84834e",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 50,
+              "page_label": "50",
+              "similarity_score": 0.8432654738426208
+            },
+            {
+              "chunk_id": "cbed89d0843506afc293b72205f958e15e1018ca19c413fab0045b92aa0b3012",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 49,
+              "page_label": "49",
+              "similarity_score": 0.6381306052207947
+            }
+          ]
+        },
+        {
+          "id": "esd_handling",
+          "question": "How should ESD-sensitive parts be handled?",
+          "expected_documents": [
+            "e-Series_Service_Manual_en.pdf"
+          ],
+          "expected_pages": [
+            13
+          ],
+          "metrics": {
+            "hit": true,
+            "retrieved_chunks": 5,
+            "expected_pages": 1,
+            "matched_pages": 1,
+            "expected_page_recall": 1.0,
+            "highest_similarity": 0.7982608079910278
+          },
+          "failure_reason": null,
+          "retrieved_results": [
+            {
+              "chunk_id": "96526f8c50ccb18f9cfc74cbbb46c234b36fcb48c20a5202b7cf3cb1eb28efab",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 16,
+              "page_label": "16",
+              "similarity_score": 0.7982608079910278
+            },
+            {
+              "chunk_id": "bd6c7555e942697e82ec8fc6a422d942e2b4fcbfa0c967e3a658107e9fda4eab",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 13,
+              "page_label": "13",
+              "similarity_score": 0.7878173589706421
+            },
+            {
+              "chunk_id": "db5160f8e526e6520d432dbc8ff31c378b626ba943e598c962973708238f332b",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 15,
+              "page_label": "15",
+              "similarity_score": 0.7700650691986084
+            },
+            {
+              "chunk_id": "200956edf5df0126f4238e4cf2e91978b7a83630bc2b939282dbd98b9e72276f",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 10,
+              "page_label": "10",
+              "similarity_score": 0.7653116583824158
+            },
+            {
+              "chunk_id": "4768b8a632b2e044fc759fdbbbbbb28dae60626020a4b6455140a569b998e5da",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 11,
+              "page_label": "11",
+              "similarity_score": 0.7093222141265869
+            }
+          ]
+        },
+        {
+          "id": "clamp_seals_and_rings",
+          "question": "Which seals and rings should be replaced when assembling a clamp connection?",
+          "expected_documents": [
+            "e-Series_Service_Manual_en.pdf"
+          ],
+          "expected_pages": [
+            51
+          ],
+          "metrics": {
+            "hit": true,
+            "retrieved_chunks": 1,
+            "expected_pages": 1,
+            "matched_pages": 1,
+            "expected_page_recall": 1.0,
+            "highest_similarity": 0.6732203960418701
+          },
+          "failure_reason": null,
+          "retrieved_results": [
+            {
+              "chunk_id": "84d491af09018c61f64dfe3ef7097f486d26080b9bc4e7bf16c743e44001d6fb",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 51,
+              "page_label": "51",
+              "similarity_score": 0.6732203960418701
+            }
+          ]
+        },
+        {
+          "id": "blue_lid_removal",
+          "question": "How is the blue lid removed before disassembling a clamp connection?",
+          "expected_documents": [
+            "e-Series_Service_Manual_en.pdf"
+          ],
+          "expected_pages": [
+            49
+          ],
+          "metrics": {
+            "hit": true,
+            "retrieved_chunks": 2,
+            "expected_pages": 1,
+            "matched_pages": 1,
+            "expected_page_recall": 1.0,
+            "highest_similarity": 0.6958807706832886
+          },
+          "failure_reason": null,
+          "retrieved_results": [
+            {
+              "chunk_id": "cbed89d0843506afc293b72205f958e15e1018ca19c413fab0045b92aa0b3012",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 49,
+              "page_label": "49",
+              "similarity_score": 0.6958807706832886
+            },
+            {
+              "chunk_id": "7a338ceffc2fc97c138d4262983c4bcd85640ae63b05be7baa2201d9868b1300",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 42,
+              "page_label": "42",
+              "similarity_score": 0.6245322823524475
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "top_k": 5,
+      "similarity_threshold": 0.7,
+      "aggregate_metrics": {
+        "question_count": 4,
+        "hit_count": 2,
+        "hit_rate": 0.5,
+        "expected_page_count": 4,
+        "matched_page_count": 2,
+        "expected_page_recall": 0.5
+      },
+      "failure_counts": {
+        "expected_page_below_similarity_threshold": 2
+      },
+      "cases": [
+        {
+          "id": "clamp_joint_support",
+          "question": "How should the joint be supported when removing the clamp?",
+          "expected_documents": [
+            "e-Series_Service_Manual_en.pdf"
+          ],
+          "expected_pages": [
+            50
+          ],
+          "metrics": {
+            "hit": true,
+            "retrieved_chunks": 1,
+            "expected_pages": 1,
+            "matched_pages": 1,
+            "expected_page_recall": 1.0,
+            "highest_similarity": 0.8432654738426208
+          },
+          "failure_reason": null,
+          "retrieved_results": [
+            {
+              "chunk_id": "8ef80f60473ca2bf1185ce5e47dbaaf154a85ae3f73e4f73cf4da2511e84834e",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 50,
+              "page_label": "50",
+              "similarity_score": 0.8432654738426208
+            }
+          ]
+        },
+        {
+          "id": "esd_handling",
+          "question": "How should ESD-sensitive parts be handled?",
+          "expected_documents": [
+            "e-Series_Service_Manual_en.pdf"
+          ],
+          "expected_pages": [
+            13
+          ],
+          "metrics": {
+            "hit": true,
+            "retrieved_chunks": 5,
+            "expected_pages": 1,
+            "matched_pages": 1,
+            "expected_page_recall": 1.0,
+            "highest_similarity": 0.7982608079910278
+          },
+          "failure_reason": null,
+          "retrieved_results": [
+            {
+              "chunk_id": "96526f8c50ccb18f9cfc74cbbb46c234b36fcb48c20a5202b7cf3cb1eb28efab",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 16,
+              "page_label": "16",
+              "similarity_score": 0.7982608079910278
+            },
+            {
+              "chunk_id": "bd6c7555e942697e82ec8fc6a422d942e2b4fcbfa0c967e3a658107e9fda4eab",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 13,
+              "page_label": "13",
+              "similarity_score": 0.7878173589706421
+            },
+            {
+              "chunk_id": "db5160f8e526e6520d432dbc8ff31c378b626ba943e598c962973708238f332b",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 15,
+              "page_label": "15",
+              "similarity_score": 0.7700650691986084
+            },
+            {
+              "chunk_id": "200956edf5df0126f4238e4cf2e91978b7a83630bc2b939282dbd98b9e72276f",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 10,
+              "page_label": "10",
+              "similarity_score": 0.7653116583824158
+            },
+            {
+              "chunk_id": "4768b8a632b2e044fc759fdbbbbbb28dae60626020a4b6455140a569b998e5da",
+              "source_name": "e-Series_Service_Manual_en.pdf",
+              "page_number": 11,
+              "page_label": "11",
+              "similarity_score": 0.7093222141265869
+            }
+          ]
+        },
+        {
+          "id": "clamp_seals_and_rings",
+          "question": "Which seals and rings should be replaced when assembling a clamp connection?",
+          "expected_documents": [
+            "e-Series_Service_Manual_en.pdf"
+          ],
+          "expected_pages": [
+            51
+          ],
+          "metrics": {
+            "hit": false,
+            "retrieved_chunks": 0,
+            "expected_pages": 1,
+            "matched_pages": 0,
+            "expected_page_recall": 0.0,
+            "highest_similarity": null
+          },
+          "failure_reason": "expected_page_below_similarity_threshold",
+          "retrieved_results": []
+        },
+        {
+          "id": "blue_lid_removal",
+          "question": "How is the blue lid removed before disassembling a clamp connection?",
+          "expected_documents": [
+            "e-Series_Service_Manual_en.pdf"
+          ],
+          "expected_pages": [
+            49
+          ],
+          "metrics": {
+            "hit": false,
+            "retrieved_chunks": 0,
+            "expected_pages": 1,
+            "matched_pages": 0,
+            "expected_page_recall": 0.0,
+            "highest_similarity": null
+          },
+          "failure_reason": "expected_page_below_similarity_threshold",
+          "retrieved_results": []
+        }
+      ]
+    }
+  ]
+}
