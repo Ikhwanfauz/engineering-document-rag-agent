@@ -316,22 +316,25 @@ Completion condition:
 - Recommended `top_k=3` with similarity threshold `0.60`.
 - Achieved `100%` hit rate and `100%` expected-page recall with the recommended configuration.
 
-### Version 7C — Answer and abstention evaluation
+### Version 7C — Answer and abstention evaluation ✅
 
-- Measure answer correctness.
-- Measure groundedness.
-- Measure citation correctness.
-- Measure abstention accuracy.
-- Record response latency.
+- Added answer-quality evaluation in `evaluation/evaluate_answers.py`.
+- Measured answer-point coverage, evidence grounding, citation correctness, abstention accuracy, and response latency.
+- Saved the `qwen3:8b` baseline in `evaluation/results/answer_evaluation.json`.
+- Achieved `100%` abstention accuracy, `75%` citation correctness, `56.95%` answer-point coverage, and `86.38%` evidence grounding.
+- Verified successfully with 138 full-project tests and Ruff.
+- Committed and pushed as `d2ace89`.
 
-### Version 7D — Configuration comparison and report
+### Version 7D — Configuration comparison and report ✅
 
-- Compare selected LLM and retrieval configurations.
-- Compare `llama3.2` and `qwen3:8b` where appropriate.
-- Select the final supported configuration using measured results.
-- Document results, limitations, and improvement opportunities.
-- Run complete tests and Ruff.
-- Commit and push Version 7.
+- Compared the selected retrieval configurations using measured Version 7B results.
+- Compared `qwen3:8b` and `llama3.2` using the same evaluation dataset and retrieval settings.
+- Saved the Llama comparison in `evaluation/results/answer_evaluation_llama3_2.json`.
+- Selected `top_k=3` with similarity threshold `0.60`.
+- Selected `qwen3:8b` as the final supported language model because it produced more focused and grounded answers.
+- Documented results, limitations, reproducibility steps, and improvement opportunities in `docs/configuration_comparison.md`.
+- Ran complete tests and Ruff.
+- Completed and pushed Version 7.
 
 Completion condition:
 
