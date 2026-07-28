@@ -289,11 +289,19 @@ Completion condition:
 
 ### Version 7A — Evaluation dataset
 
-- Create a labeled evaluation-question dataset.
-- Include answerable and unanswerable questions.
-- Record expected documents and page labels.
-- Record reference answers or required answer points.
-- Keep the dataset version-controlled and reproducible.
+## Version 7 — Evaluation and benchmarking [IN PROGRESS]
+
+### Version 7A — Evaluation dataset [COMPLETED]
+
+- Created a labeled evaluation dataset in `evaluation/evaluation_dataset.json`.
+- Added four answerable engineering questions and one unanswerable question.
+- Recorded expected source documents, physical pages, and user-facing page labels.
+- Recorded required answer points for grounded-answer evaluation.
+- Recorded the exact expected abstention response for unanswerable questions.
+- Added schema, dataset-version, and source-document metadata for reproducibility.
+- Added automated dataset validation in `tests/test_evaluation_dataset.py`.
+- Added Version 7A documentation in `docs/evaluation_dataset.md`.
+- Verified successfully with 6 focused tests, 112 full-project tests, and Ruff.
 
 ### Version 7B — Retrieval evaluation
 

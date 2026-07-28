@@ -1,6 +1,98 @@
 {
-  "schema_version": "0.1",
-  "description": "Evaluation examples will be added after selecting the first engineering manual.",
-  "examples": []
+  "schema_version": "1.0",
+  "dataset_version": "7A",
+  "description": "Labeled evaluation dataset for the Engineering Document RAG Agent. It contains answerable and unanswerable questions for reproducible retrieval and answer-quality evaluation.",
+  "source_documents": [
+    {
+      "document_id": "e-series-service-manual",
+      "source_filename": "e-Series_Service_Manual_en.pdf",
+      "document_title": "Universal Robots e-Series Service Manual"
+    }
+  ],
+  "examples": [
+    {
+      "id": "clamp_joint_support",
+      "question": "How should the joint be supported when removing the clamp?",
+      "answerable": true,
+      "expected_documents": [
+        "e-Series_Service_Manual_en.pdf"
+      ],
+      "expected_pages": [
+        50
+      ],
+      "expected_page_labels": [
+        "50"
+      ],
+      "required_answer_points": [
+        "The joint must be supported before the clamp is removed.",
+        "The support prevents the joint from falling or moving unexpectedly."
+      ]
+    },
+    {
+      "id": "esd_handling",
+      "question": "How should ESD-sensitive parts be handled?",
+      "answerable": true,
+      "expected_documents": [
+        "e-Series_Service_Manual_en.pdf"
+      ],
+      "expected_pages": [
+        13
+      ],
+      "expected_page_labels": [
+        "13"
+      ],
+      "required_answer_points": [
+        "ESD-sensitive parts must be handled using appropriate electrostatic-discharge precautions.",
+        "The person handling the parts must be properly grounded.",
+        "The parts must be protected from electrostatic discharge during handling."
+      ]
+    },
+    {
+      "id": "clamp_seals_and_rings",
+      "question": "Which seals and rings should be replaced when assembling a clamp connection?",
+      "answerable": true,
+      "expected_documents": [
+        "e-Series_Service_Manual_en.pdf"
+      ],
+      "expected_pages": [
+        51
+      ],
+      "expected_page_labels": [
+        "51"
+      ],
+      "required_answer_points": [
+        "The answer must identify the seals and rings that the manual instructs the technician to replace.",
+        "The replacement must be described as part of assembling the clamp connection."
+      ]
+    },
+    {
+      "id": "blue_lid_removal",
+      "question": "How is the blue lid removed before disassembling a clamp connection?",
+      "answerable": true,
+      "expected_documents": [
+        "e-Series_Service_Manual_en.pdf"
+      ],
+      "expected_pages": [
+        49
+      ],
+      "expected_page_labels": [
+        "49"
+      ],
+      "required_answer_points": [
+        "The answer must explain the manual's procedure for removing the blue lid.",
+        "The blue lid must be removed before the clamp connection is disassembled."
+      ]
+    },
+    {
+      "id": "unanswerable_capital",
+      "question": "What is the capital of Malaysia?",
+      "answerable": false,
+      "expected_documents": [],
+      "expected_pages": [],
+      "expected_page_labels": [],
+      "required_answer_points": [],
+      "expected_response": "I don't know based on the uploaded documents."
+    }
+  ]
 }
 
