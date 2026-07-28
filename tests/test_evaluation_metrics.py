@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 import pytest
 
 from evaluation.metrics import (
@@ -9,6 +11,9 @@ from evaluation.metrics import (
     aggregate_retrieval_metrics,
     evaluate_retrieval_case,
     filter_by_similarity,
+    AnswerCaseMetrics,
+    aggregate_answer_metrics,
+    evaluate_answer_case,
 )
 from src.retriever import RetrievedChunk
 
@@ -159,3 +164,194 @@ def test_aggregate_retrieval_metrics_handles_empty_cases() -> None:
     assert aggregate.expected_page_count == 0
     assert aggregate.matched_page_count == 0
     assert aggregate.expected_page_recall == 0.0
+
+def _make_answer(
+    *,
+    text: str,
+    abstained: bool,
+    citations: tuple[object, ...] = (),
+    evidence: tuple[RetrievedChunk, ...] = (),
+) -> SimpleNamespace:
+    return SimpleNamespace(
+        answer=text,
+        abstained=abstained,
+        citations=citations,
+        evidence=evidence,
+    )
+
+
+def _make_answer_example(
+    *,
+    answerable: bool = True,
+) -> dict[str, object]:
+    return {
+        "answerable": answerable,
+        "expected_documents": [
+            "e-Series_Service_Manual_en.pdf"
+        ]
+        if answerable
+        else [],
+        "expected_pages": [51] if answerable else [],
+        "expected_page_labels": ["51"] if answerable else [],
+        "required_answer_points": [
+            "Replace seals and rings."
+        ]
+        if answerable
+        else [],
+        "expected_response": (
+            None
+            if answerable
+            else "I don't know based on the uploaded documents."
+        ),
+    }
+
+
+def test_evaluate_answer_case_scores_correct_answer() -> None:
+    citation = SimpleNamespace(
+        source_name="e-Series_Service_Manual_en.pdf",
+        page_number=51,
+        page_label="51",
+    )
+    evidence = _make_chunk(
+        page_number=51,
+        similarity_score=0.85,
+    )
+    evidence = RetrievedChunk(
+        chunk_id=evidence.chunk_id,
+        document_id=evidence.document_id,
+        source_name=evidence.source_name,
+        page_number=evidence.page_number,
+        page_label=evidence.page_label,
+        chunk_index=evidence.chunk_index,
+        text="Replace seals and rings.",
+        distance=evidence.distance,
+        similarity_score=evidence.similarity_score,
+    )
+    answer = _make_answer(
+        text="Replace seals and rings.",
+        abstained=False,
+        citations=(citation,),
+        evidence=(evidence,),
+    )
+
+    metrics = evaluate_answer_case(
+        _make_answer_example(),
+        answer,
+        latency_seconds=1.25,
+    )
+
+    assert metrics.answerable is True
+    assert metrics.abstention_correct is True
+    assert metrics.citation_correctness == pytest.approx(1.0)
+    assert metrics.answer_point_coverage == pytest.approx(1.0)
+    assert metrics.evidence_grounding_score == pytest.approx(1.0)
+    assert metrics.latency_seconds == pytest.approx(1.25)
+
+
+def test_evaluate_answer_case_penalizes_answerable_abstention() -> None:
+    answer = _make_answer(
+        text="I don't know based on the uploaded documents.",
+        abstained=True,
+    )
+
+    metrics = evaluate_answer_case(
+        _make_answer_example(),
+        answer,
+        latency_seconds=0.5,
+    )
+
+    assert metrics.abstention_correct is False
+    assert metrics.citation_correctness == 0.0
+    assert metrics.answer_point_coverage == 0.0
+    assert metrics.evidence_grounding_score == 0.0
+
+
+def test_evaluate_answer_case_accepts_expected_abstention() -> None:
+    answer = _make_answer(
+        text="I don't know based on the uploaded documents.",
+        abstained=True,
+    )
+
+    metrics = evaluate_answer_case(
+        _make_answer_example(answerable=False),
+        answer,
+        latency_seconds=0.4,
+    )
+
+    assert metrics.answerable is False
+    assert metrics.abstention_correct is True
+    assert metrics.citation_correctness is None
+    assert metrics.answer_point_coverage is None
+    assert metrics.evidence_grounding_score is None
+
+
+def test_evaluate_answer_case_rejects_wrong_abstention_text() -> None:
+    answer = _make_answer(
+        text="I cannot answer.",
+        abstained=True,
+    )
+
+    metrics = evaluate_answer_case(
+        _make_answer_example(answerable=False),
+        answer,
+        latency_seconds=0.4,
+    )
+
+    assert metrics.abstention_correct is False
+
+
+def test_evaluate_answer_case_rejects_negative_latency() -> None:
+    answer = _make_answer(
+        text="Replace seals and rings.",
+        abstained=False,
+    )
+
+    with pytest.raises(ValueError, match="Latency cannot be negative"):
+        evaluate_answer_case(
+            _make_answer_example(),
+            answer,
+            latency_seconds=-0.1,
+        )
+
+
+def test_aggregate_answer_metrics_combines_cases() -> None:
+    cases = (
+        AnswerCaseMetrics(
+            answerable=True,
+            abstention_correct=True,
+            citation_correctness=1.0,
+            answer_point_coverage=0.8,
+            evidence_grounding_score=0.6,
+            latency_seconds=2.0,
+        ),
+        AnswerCaseMetrics(
+            answerable=False,
+            abstention_correct=False,
+            citation_correctness=None,
+            answer_point_coverage=None,
+            evidence_grounding_score=None,
+            latency_seconds=4.0,
+        ),
+    )
+
+    aggregate = aggregate_answer_metrics(cases)
+
+    assert aggregate.question_count == 2
+    assert aggregate.abstention_correct_count == 1
+    assert aggregate.abstention_accuracy == pytest.approx(0.5)
+    assert aggregate.citation_correctness == pytest.approx(1.0)
+    assert aggregate.answer_point_coverage == pytest.approx(0.8)
+    assert aggregate.evidence_grounding_score == pytest.approx(0.6)
+    assert aggregate.average_latency_seconds == pytest.approx(3.0)
+
+
+def test_aggregate_answer_metrics_handles_empty_cases() -> None:
+    aggregate = aggregate_answer_metrics(())
+
+    assert aggregate.question_count == 0
+    assert aggregate.abstention_correct_count == 0
+    assert aggregate.abstention_accuracy == 0.0
+    assert aggregate.citation_correctness == 0.0
+    assert aggregate.answer_point_coverage == 0.0
+    assert aggregate.evidence_grounding_score == 0.0
+    assert aggregate.average_latency_seconds == 0.0

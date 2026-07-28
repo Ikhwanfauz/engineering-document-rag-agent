@@ -1,0 +1,343 @@
+{
+  "schema_version": "1.0",
+  "evaluation_version": "7C",
+  "generated_at_utc": "2026-07-28T17:00:55.125479+00:00",
+  "dataset": {
+    "path": "evaluation\\evaluation_dataset.json",
+    "schema_version": "1.0",
+    "dataset_version": "7A"
+  },
+  "configuration": {
+    "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+    "collection": "engineering_documents",
+    "ollama_model": "qwen3:8b",
+    "ollama_base_url": "http://localhost:11434",
+    "temperature": 0.0,
+    "reasoning": false,
+    "num_predict": 256,
+    "top_k": 3,
+    "minimum_similarity": 0.6
+  },
+  "question_count": 5,
+  "elapsed_seconds": 21.32430709997425,
+  "aggregate_metrics": {
+    "question_count": 5,
+    "abstention_correct_count": 5,
+    "abstention_accuracy": 1.0,
+    "citation_correctness": 0.75,
+    "answer_point_coverage": 0.569473581973582,
+    "evidence_grounding_score": 0.8637992831541219,
+    "average_latency_seconds": 4.245585519983433
+  },
+  "cases": [
+    {
+      "id": "clamp_joint_support",
+      "question": "How should the joint be supported when removing the clamp?",
+      "expected": {
+        "answerable": true,
+        "documents": [
+          "e-Series_Service_Manual_en.pdf"
+        ],
+        "pages": [
+          50
+        ],
+        "page_labels": [
+          "50"
+        ],
+        "required_answer_points": [
+          "Always replace the flexible flat black ring with a new one.",
+          "Replace the foam seal on the clamps if it is damaged.",
+          "Replace the wear rings if they show extensive wear or damage."
+        ],
+        "response": null
+      },
+      "actual": {
+        "answer": "When removing the clamp, the joint must be supported to prevent it from falling off. Support the joint as you remove the second side of the clamp.",
+        "abstained": false,
+        "citations": [
+          {
+            "document_id": "223204344883ac823e7fb7c45fd285907bddb7190cbb31406db92ce4bfb5f8fa",
+            "source_name": "e-Series_Service_Manual_en.pdf",
+            "page_number": 50,
+            "page_label": "50",
+            "excerpt": "4. Remove the screws and the clamp on one side. MANDATORY ACTION The joint can fall off if not supported when removing the clamp. 5. Support the joint as you remove the second side of the clamp."
+          },
+          {
+            "document_id": "223204344883ac823e7fb7c45fd285907bddb7190cbb31406db92ce4bfb5f8fa",
+            "source_name": "e-Series_Service_Manual_en.pdf",
+            "page_number": 49,
+            "page_label": "49",
+            "excerpt": "5.2.8. Clamp Connection Clamp The following two sections describe how to disassemble and assemble a joint with a clamp connection connection. location Clamp connection location UR5e UR10e and UR16e Disassembling Clamp Connection Clamp 1. Remove the screws in the blue lid, then remove the blue lid..."
+          }
+        ],
+        "accepted_evidence": [
+          {
+            "chunk_id": "8ef80f60473ca2bf1185ce5e47dbaaf154a85ae3f73e4f73cf4da2511e84834e",
+            "document_id": "223204344883ac823e7fb7c45fd285907bddb7190cbb31406db92ce4bfb5f8fa",
+            "source_name": "e-Series_Service_Manual_en.pdf",
+            "page_number": 50,
+            "page_label": "50",
+            "similarity_score": 0.8432654738426208,
+            "text": "4. Remove the screws and the clamp on one side.\n\nMANDATORY ACTION\n\nThe joint can fall off if not supported when removing the clamp.\n\n5. Support the joint as you remove the second side of the clamp."
+          },
+          {
+            "chunk_id": "cbed89d0843506afc293b72205f958e15e1018ca19c413fab0045b92aa0b3012",
+            "document_id": "223204344883ac823e7fb7c45fd285907bddb7190cbb31406db92ce4bfb5f8fa",
+            "source_name": "e-Series_Service_Manual_en.pdf",
+            "page_number": 49,
+            "page_label": "49",
+            "similarity_score": 0.6381306052207947,
+            "text": "5.2.8. Clamp Connection\n\nClamp The following two sections describe how to disassemble and assemble a joint with a clamp\nconnection connection.\nlocation\nClamp connection location\n\nUR5e UR10e and UR16e\n\nDisassembling Clamp Connection\nClamp 1. Remove the screws in the blue lid, then remove the blue lid, as shown in section\ndisassembly General Guidance to Separate Joint from Counterpart.\n2. Gently remove the power and communications wires from the terminals, as shown\nin section Power and Communication Connector Types on the Joint and Connector\nLocation on joints.\n\n3. Remove the black flat ring. You can use a small flat-head screwdriver."
+          }
+        ]
+      },
+      "metrics": {
+        "answerable": true,
+        "abstention_correct": true,
+        "citation_correctness": 0.5,
+        "answer_point_coverage": 0.0,
+        "evidence_grounding_score": 0.8333333333333334,
+        "latency_seconds": 15.442560499999672
+      }
+    },
+    {
+      "id": "esd_handling",
+      "question": "How should ESD-sensitive parts be handled?",
+      "expected": {
+        "answerable": true,
+        "documents": [
+          "e-Series_Service_Manual_en.pdf"
+        ],
+        "pages": [
+          13,
+          15,
+          16
+        ],
+        "page_labels": [
+          "13",
+          "15",
+          "16"
+        ],
+        "required_answer_points": [
+          "Hold ESD-sensitive parts by their edges and do not touch their pins or exposed prints.",
+          "When handing an ESD-sensitive part to another person, both people must wear ESD wristbands connected to the system ground.",
+          "Place the old part in a spare ESD bag before taking the new part out of its ESD bag."
+        ],
+        "response": null
+      },
+      "actual": {
+        "answer": "ESD-sensitive parts must be handled by holding them by their edges and not touching their pins or exposed prints. When handing them to another person, both individuals must wear ESD wristbands connected to the system ground. The old part should be placed in a spare ESD bag first, then the new part should be taken from the ESD bag.",
+        "abstained": false,
+        "citations": [
+          {
+            "document_id": "223204344883ac823e7fb7c45fd285907bddb7190cbb31406db92ce4bfb5f8fa",
+            "source_name": "e-Series_Service_Manual_en.pdf",
+            "page_number": 16,
+            "page_label": "16",
+            "excerpt": "3. Handling Electrostatic Discharge (ESD)-Sensitive Parts Figure 1.9. Improper and proper handing of PCB to another user. NOTICE Extra care is needed when working with ESD-sensitive parts during cold weather and when heating is used, because low air humidity increases accumulation of the static e..."
+          },
+          {
+            "document_id": "223204344883ac823e7fb7c45fd285907bddb7190cbb31406db92ce4bfb5f8fa",
+            "source_name": "e-Series_Service_Manual_en.pdf",
+            "page_number": 13,
+            "page_label": "13",
+            "excerpt": "3. Handling Electrostatic Discharge (ESD)-Sensitive Parts NOTICE Replacing an ESD-sensitive part in a safe way is important to avoid damage to the part. It is important to take precautions when handling an ESD-sensitive part. Figure 1.3. ESD wristband connection to the system ground NOTICE Hold t..."
+          },
+          {
+            "document_id": "223204344883ac823e7fb7c45fd285907bddb7190cbb31406db92ce4bfb5f8fa",
+            "source_name": "e-Series_Service_Manual_en.pdf",
+            "page_number": 15,
+            "page_label": "15",
+            "excerpt": "3. Handling Electrostatic Discharge (ESD)-Sensitive Parts Figure 1.8. Wrong placement of ESD-sensitive part in metallic surface NOTICE If handing an ESD-sensitive part to another person, ensure both are wearing ESD wristband, attached to the system ground point."
+          }
+        ],
+        "accepted_evidence": [
+          {
+            "chunk_id": "96526f8c50ccb18f9cfc74cbbb46c234b36fcb48c20a5202b7cf3cb1eb28efab",
+            "document_id": "223204344883ac823e7fb7c45fd285907bddb7190cbb31406db92ce4bfb5f8fa",
+            "source_name": "e-Series_Service_Manual_en.pdf",
+            "page_number": 16,
+            "page_label": "16",
+            "similarity_score": 0.7982608079910278,
+            "text": "3. Handling Electrostatic Discharge (ESD)-Sensitive Parts\n\nFigure 1.9. Improper and proper handing of PCB to another user.\n\nNOTICE\n\nExtra care is needed when working with ESD-sensitive parts during cold weather and when heating is used, because low air humidity increases accumulation of\nthe static electricity."
+          },
+          {
+            "chunk_id": "bd6c7555e942697e82ec8fc6a422d942e2b4fcbfa0c967e3a658107e9fda4eab",
+            "document_id": "223204344883ac823e7fb7c45fd285907bddb7190cbb31406db92ce4bfb5f8fa",
+            "source_name": "e-Series_Service_Manual_en.pdf",
+            "page_number": 13,
+            "page_label": "13",
+            "similarity_score": 0.7878173589706421,
+            "text": "3. Handling Electrostatic Discharge (ESD)-Sensitive Parts\n\nNOTICE\n\nReplacing an ESD-sensitive part in a safe way is important to avoid damage to\nthe part. It is important to take precautions when handling an ESD-sensitive part.\n\nFigure 1.3. ESD wristband connection to the system ground\n\nNOTICE\nHold the ESD-sensitive part by its edges. Do not touch its pins or hold directly on\nany exposed prints.\n\nFigure 1.4 Correct and incorrect PCB handling\n\nNOTICE\n\nFirst place the OLD part in the spare ESD bag, then take out the NEW part of the\nESD bag."
+          },
+          {
+            "chunk_id": "db5160f8e526e6520d432dbc8ff31c378b626ba943e598c962973708238f332b",
+            "document_id": "223204344883ac823e7fb7c45fd285907bddb7190cbb31406db92ce4bfb5f8fa",
+            "source_name": "e-Series_Service_Manual_en.pdf",
+            "page_number": 15,
+            "page_label": "15",
+            "similarity_score": 0.7700650691986084,
+            "text": "3. Handling Electrostatic Discharge (ESD)-Sensitive Parts\n\nFigure 1.8. Wrong placement of ESD-sensitive part in metallic surface\n\nNOTICE\n\nIf handing an ESD-sensitive part to another person, ensure both are wearing ESD wristband, attached to the system ground point."
+          }
+        ]
+      },
+      "metrics": {
+        "answerable": true,
+        "abstention_correct": true,
+        "citation_correctness": 1.0,
+        "answer_point_coverage": 0.7501165501165502,
+        "evidence_grounding_score": 0.6774193548387096,
+        "latency_seconds": 2.415072899952065
+      }
+    },
+    {
+      "id": "clamp_seals_and_rings",
+      "question": "Which seals and rings should be replaced when assembling a clamp connection?",
+      "expected": {
+        "answerable": true,
+        "documents": [
+          "e-Series_Service_Manual_en.pdf"
+        ],
+        "pages": [
+          51
+        ],
+        "page_labels": [
+          "51"
+        ],
+        "required_answer_points": [
+          "Always replace the flexible flat black ring with a new one.",
+          "Replace the foam seal on the clamps if it is damaged.",
+          "Replace the wear rings if they show extensive wear or damage."
+        ],
+        "response": null
+      },
+      "actual": {
+        "answer": "When assembling a clamp connection, the flexible flat black ring, the foam seal on the clamps (if damaged), and the wear rings (if extensive wear or damage is shown) must be replaced.",
+        "abstained": false,
+        "citations": [
+          {
+            "document_id": "223204344883ac823e7fb7c45fd285907bddb7190cbb31406db92ce4bfb5f8fa",
+            "source_name": "e-Series_Service_Manual_en.pdf",
+            "page_number": 51,
+            "page_label": "51",
+            "excerpt": "Assembling Clamp Connection Clamp The assembly is done in reverse of the disassembly. However, a few things must be noted assembly before assembly is begun. NOTICE \u2022 Always replace the flexible flat black ring with a new one to maintain the IP classification. \u2022 Replace the foam seal on the clamps..."
+          }
+        ],
+        "accepted_evidence": [
+          {
+            "chunk_id": "84d491af09018c61f64dfe3ef7097f486d26080b9bc4e7bf16c743e44001d6fb",
+            "document_id": "223204344883ac823e7fb7c45fd285907bddb7190cbb31406db92ce4bfb5f8fa",
+            "source_name": "e-Series_Service_Manual_en.pdf",
+            "page_number": 51,
+            "page_label": "51",
+            "similarity_score": 0.6732203960418701,
+            "text": "Assembling Clamp Connection\n\nClamp The assembly is done in reverse of the disassembly. However, a few things must be noted\nassembly before assembly is begun.\n\nNOTICE\n\n\u2022 Always replace the flexible flat black ring with a new one to maintain the\nIP classification.\n\u2022 Replace the foam seal on the clamps, if damaged, to maintain the IP\nclassification.\n\u2022 Replace the wear rings if extensive wear or damage is shown.\n\u2022 The dots must be aligned; otherwise, the connection cannot be made.\n\nCAUTION\n\n\u2022 Joints should be assembled in a vertical position to ensure proper\nmating between the joints."
+          }
+        ]
+      },
+      "metrics": {
+        "answerable": true,
+        "abstention_correct": true,
+        "citation_correctness": 1.0,
+        "answer_point_coverage": 0.6527777777777778,
+        "evidence_grounding_score": 0.9444444444444444,
+        "latency_seconds": 1.589009299990721
+      }
+    },
+    {
+      "id": "blue_lid_removal",
+      "question": "How is the blue lid removed before disassembling a clamp connection?",
+      "expected": {
+        "answerable": true,
+        "documents": [
+          "e-Series_Service_Manual_en.pdf"
+        ],
+        "pages": [
+          49
+        ],
+        "page_labels": [
+          "49"
+        ],
+        "required_answer_points": [
+          "Remove the screws in the blue lid.",
+          "Then remove the blue lid before continuing with the clamp connection disassembly."
+        ],
+        "response": null
+      },
+      "actual": {
+        "answer": "To remove the blue lid before disassembling a clamp connection, you must remove the screws in the blue lid, then remove the blue lid as shown in section General Guidance to Separate Joint from Counterpart.",
+        "abstained": false,
+        "citations": [
+          {
+            "document_id": "223204344883ac823e7fb7c45fd285907bddb7190cbb31406db92ce4bfb5f8fa",
+            "source_name": "e-Series_Service_Manual_en.pdf",
+            "page_number": 49,
+            "page_label": "49",
+            "excerpt": "5.2.8. Clamp Connection Clamp The following two sections describe how to disassemble and assemble a joint with a clamp connection connection. location Clamp connection location UR5e UR10e and UR16e Disassembling Clamp Connection Clamp 1. Remove the screws in the blue lid, then remove the blue lid..."
+          },
+          {
+            "document_id": "223204344883ac823e7fb7c45fd285907bddb7190cbb31406db92ce4bfb5f8fa",
+            "source_name": "e-Series_Service_Manual_en.pdf",
+            "page_number": 42,
+            "page_label": "42",
+            "excerpt": "Disassembling Screw Connection Screw 1. Remove the screws in the blue lid, then remove the blue lid as shown in section disassemble General Guidance to Separate Joint from Counterpart 2. Gently remove the power and communications wires from the terminals, as shown in section Power and Communicati..."
+          }
+        ],
+        "accepted_evidence": [
+          {
+            "chunk_id": "cbed89d0843506afc293b72205f958e15e1018ca19c413fab0045b92aa0b3012",
+            "document_id": "223204344883ac823e7fb7c45fd285907bddb7190cbb31406db92ce4bfb5f8fa",
+            "source_name": "e-Series_Service_Manual_en.pdf",
+            "page_number": 49,
+            "page_label": "49",
+            "similarity_score": 0.6958807706832886,
+            "text": "5.2.8. Clamp Connection\n\nClamp The following two sections describe how to disassemble and assemble a joint with a clamp\nconnection connection.\nlocation\nClamp connection location\n\nUR5e UR10e and UR16e\n\nDisassembling Clamp Connection\nClamp 1. Remove the screws in the blue lid, then remove the blue lid, as shown in section\ndisassembly General Guidance to Separate Joint from Counterpart.\n2. Gently remove the power and communications wires from the terminals, as shown\nin section Power and Communication Connector Types on the Joint and Connector\nLocation on joints.\n\n3. Remove the black flat ring. You can use a small flat-head screwdriver."
+          },
+          {
+            "chunk_id": "7a338ceffc2fc97c138d4262983c4bcd85640ae63b05be7baa2201d9868b1300",
+            "document_id": "223204344883ac823e7fb7c45fd285907bddb7190cbb31406db92ce4bfb5f8fa",
+            "source_name": "e-Series_Service_Manual_en.pdf",
+            "page_number": 42,
+            "page_label": "42",
+            "similarity_score": 0.6245322823524475,
+            "text": "Disassembling Screw Connection\n\nScrew 1. Remove the screws in the blue lid, then remove the blue lid as shown in section\ndisassemble General Guidance to Separate Joint from Counterpart\n2. Gently remove the power and communications wires from the terminals, as shown\nin section Power and Communication Connector Types on the Joint and\nConnector Location on Joints.\n\n3. Use a small flat-head screwdriver to push off the flat ring. Then slide the flat ring\nover the joint.\n\nMANDATORY ACTION\n\nThe joint can fall off if not supported when removing the screws."
+          }
+        ]
+      },
+      "metrics": {
+        "answerable": true,
+        "abstention_correct": true,
+        "citation_correctness": 0.5,
+        "answer_point_coverage": 0.875,
+        "evidence_grounding_score": 1.0,
+        "latency_seconds": 1.6711136999656446
+      }
+    },
+    {
+      "id": "unanswerable_capital",
+      "question": "What is the capital of Malaysia?",
+      "expected": {
+        "answerable": false,
+        "documents": [],
+        "pages": [],
+        "page_labels": [],
+        "required_answer_points": [],
+        "response": "I don't know based on the uploaded documents."
+      },
+      "actual": {
+        "answer": "I don't know based on the uploaded documents.",
+        "abstained": true,
+        "citations": [],
+        "accepted_evidence": []
+      },
+      "metrics": {
+        "answerable": false,
+        "abstention_correct": true,
+        "citation_correctness": null,
+        "answer_point_coverage": null,
+        "evidence_grounding_score": null,
+        "latency_seconds": 0.11017120000906289
+      }
+    }
+  ]
+}

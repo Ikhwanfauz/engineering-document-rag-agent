@@ -24,8 +24,9 @@
         "50"
       ],
       "required_answer_points": [
-        "The joint must be supported before the clamp is removed.",
-        "The support prevents the joint from falling or moving unexpectedly."
+        "Always replace the flexible flat black ring with a new one.",
+        "Replace the foam seal on the clamps if it is damaged.",
+        "Replace the wear rings if they show extensive wear or damage."
       ]
     },
     {
@@ -36,15 +37,19 @@
         "e-Series_Service_Manual_en.pdf"
       ],
       "expected_pages": [
-        13
+        13,
+        15,
+        16
       ],
       "expected_page_labels": [
-        "13"
+        "13",
+        "15",
+        "16"
       ],
       "required_answer_points": [
-        "ESD-sensitive parts must be handled using appropriate electrostatic-discharge precautions.",
-        "The person handling the parts must be properly grounded.",
-        "The parts must be protected from electrostatic discharge during handling."
+        "Hold ESD-sensitive parts by their edges and do not touch their pins or exposed prints.",
+        "When handing an ESD-sensitive part to another person, both people must wear ESD wristbands connected to the system ground.",
+        "Place the old part in a spare ESD bag before taking the new part out of its ESD bag."
       ]
     },
     {
@@ -61,8 +66,9 @@
         "51"
       ],
       "required_answer_points": [
-        "The answer must identify the seals and rings that the manual instructs the technician to replace.",
-        "The replacement must be described as part of assembling the clamp connection."
+        "Always replace the flexible flat black ring with a new one.",
+        "Replace the foam seal on the clamps if it is damaged.",
+        "Replace the wear rings if they show extensive wear or damage."
       ]
     },
     {
@@ -79,8 +85,8 @@
         "49"
       ],
       "required_answer_points": [
-        "The answer must explain the manual's procedure for removing the blue lid.",
-        "The blue lid must be removed before the clamp connection is disassembled."
+        "Remove the screws in the blue lid.",
+        "Then remove the blue lid before continuing with the clamp connection disassembly."
       ]
     },
     {
@@ -95,4 +101,3 @@
     }
   ]
 }
-
