@@ -26,6 +26,8 @@ class EmbeddingConfig:
 
 DEFAULT_EMBEDDING_CONFIG = EmbeddingConfig()
 
+class EmbeddingServiceError(RuntimeError):
+    """Raised when the embedding model cannot load or generate embeddings."""
 
 class EmbeddingManager:
     """Load one embedding model and reuse it for documents and queries."""
@@ -42,10 +44,16 @@ class EmbeddingManager:
     def model(self) -> Any:
         """Load the model only when embeddings are first requested."""
         if self._model is None:
-            self._model = SentenceTransformer(
-                self.config.model_name,
+            try:
+                self._model = SentenceTransformer(
+                    self.config.model_name,
                 device=self.config.device,
             )
+            except Exception as exc:
+                raise EmbeddingServiceError(
+                    "The embedding model could not be loaded"
+                ) from exc
+
         return self._model
 
     @property
@@ -73,13 +81,20 @@ class EmbeddingManager:
         if any(not text.strip() for text in text_list):
             raise ValueError("Embedding input cannot contain empty text")
 
-        embeddings = self.model.encode(
-            text_list,
-            batch_size=self.config.batch_size,
-            normalize_embeddings=self.config.normalize_embeddings,
-            show_progress_bar=show_progress,
-            convert_to_numpy=True,
-        )
+        model = self.model
+
+        try:
+            embeddings = model.encode(
+                text_list,
+                batch_size=self.config.batch_size,
+                normalize_embeddings=self.config.normalize_embeddings,
+                show_progress_bar=show_progress,
+        convert_to_numpy=True,
+    )
+        except Exception as exc:
+            raise EmbeddingServiceError(
+                "The embedding model could not generate embeddings"
+            ) from exc
 
         if hasattr(embeddings, "tolist"):
             return embeddings.tolist()

@@ -3,11 +3,15 @@
 from uuid import uuid4
 
 import chromadb
+import pytest
 
-from src.embedding_manager import EmbeddingConfig
+from src.embedding_manager import EmbeddingConfig, EmbeddingServiceError
 from src.text_chunker import ChunkingConfig, process_document
-from src.vector_store import VectorStoreConfig, VectorStoreManager
-
+from src.vector_store import (
+    VectorStoreConfig,
+    VectorStoreManager,
+    VectorStoreServiceError,
+)
 from tests.test_text_chunker import _make_document
 
 
@@ -166,3 +170,137 @@ def test_delete_document_returns_zero_when_document_is_not_indexed() -> None:
 
     assert removed_chunks == 0
     assert store.collection.count() == 0
+
+def test_embedding_failure_preserves_existing_chunks(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    embedding_manager = FakeEmbeddingManager()
+    store = _create_store(embedding_manager)
+    loaded_document = _make_document(["Clamp maintenance instruction. " * 20])
+
+    first_document = process_document(
+        loaded_document,
+        ChunkingConfig(
+            chunk_size=100,
+            chunk_overlap=20,
+            margin_line_count=0,
+        ),
+    )
+    updated_document = process_document(
+        loaded_document,
+        ChunkingConfig(
+            chunk_size=180,
+            chunk_overlap=30,
+            margin_line_count=0,
+        ),
+    )
+
+    store.index_document(first_document)
+    original_ids = store._document_chunk_ids(first_document.document_id)
+
+    def raise_embedding_error(
+        *_: object,
+        **__: object,
+    ) -> list[list[float]]:
+        raise EmbeddingServiceError("embedding unavailable")
+
+    monkeypatch.setattr(
+        embedding_manager,
+        "embed_texts",
+        raise_embedding_error,
+    )
+
+    with pytest.raises(
+        EmbeddingServiceError,
+        match="embedding unavailable",
+    ):
+        store.index_document(updated_document)
+
+    remaining_ids = store._document_chunk_ids(first_document.document_id)
+
+    assert remaining_ids == original_ids
+    assert store.collection.count() == len(original_ids)
+
+def test_chromadb_write_failure_raises_service_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    embedding_manager = FakeEmbeddingManager()
+    store = _create_store(embedding_manager)
+    document = process_document(
+        _make_document(["Disconnect power before maintenance."])
+    )
+    original_error = RuntimeError("database unavailable")
+
+    def raise_write_error(*_: object, **__: object) -> None:
+        raise original_error
+
+    monkeypatch.setattr(
+        store.collection,
+        "upsert",
+        raise_write_error,
+    )
+
+    with pytest.raises(
+        VectorStoreServiceError,
+        match="vector database could not write chunks",
+    ) as error_info:
+        store.index_document(document)
+
+    assert error_info.value.__cause__ is original_error
+
+def test_partial_write_failure_removes_new_chunks(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    embedding_manager = FakeEmbeddingManager()
+    store = _create_store(embedding_manager)
+    loaded_document = _make_document(
+        ["Clamp maintenance instruction. " * 40]
+    )
+
+    first_document = process_document(
+        loaded_document,
+        ChunkingConfig(
+            chunk_size=100,
+            chunk_overlap=20,
+            margin_line_count=0,
+        ),
+    )
+    updated_document = process_document(
+        loaded_document,
+        ChunkingConfig(
+            chunk_size=180,
+            chunk_overlap=30,
+            margin_line_count=0,
+        ),
+    )
+
+    store.index_document(first_document)
+    original_ids = store._document_chunk_ids(first_document.document_id)
+    original_upsert = store.collection.upsert
+    write_calls = 0
+
+    def fail_second_write(*args: object, **kwargs: object) -> None:
+        nonlocal write_calls
+        write_calls += 1
+
+        if write_calls == 2:
+            raise RuntimeError("second batch failed")
+
+        original_upsert(*args, **kwargs)
+
+    monkeypatch.setattr(
+        store.collection,
+        "upsert",
+        fail_second_write,
+    )
+
+    with pytest.raises(
+        VectorStoreServiceError,
+        match="vector database could not write chunks",
+    ):
+        store.index_document(updated_document)
+
+    remaining_ids = store._document_chunk_ids(first_document.document_id)
+
+    assert write_calls == 2
+    assert remaining_ids == original_ids

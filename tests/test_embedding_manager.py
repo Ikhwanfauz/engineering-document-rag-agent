@@ -1,9 +1,13 @@
 """Tests for local embedding management without downloading a real model."""
 
+
 import pytest
 
-from src.embedding_manager import EmbeddingConfig, EmbeddingManager
-
+from src.embedding_manager import (
+    EmbeddingConfig,
+    EmbeddingManager,
+    EmbeddingServiceError,
+)
 
 class FakeEmbeddingModel:
     """Small predictable model used only for unit testing."""
@@ -81,3 +85,43 @@ def test_empty_query_is_rejected() -> None:
 
     with pytest.raises(ValueError, match="Query cannot be empty"):
         manager.embed_query(" ")
+
+def test_model_loading_failure_raises_service_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    original_error = RuntimeError("model unavailable")
+
+    def raise_loading_error(*_: object, **__: object) -> None:
+        raise original_error
+
+    monkeypatch.setattr(
+        "src.embedding_manager.SentenceTransformer",
+        raise_loading_error,
+    )
+
+    manager = EmbeddingManager()
+
+    with pytest.raises(
+        EmbeddingServiceError,
+        match="embedding model could not be loaded",
+    ) as error_info:
+        manager.embed_query("How should the joint be supported?")
+
+    assert error_info.value.__cause__ is original_error
+
+def test_embedding_generation_failure_raises_service_error() -> None:
+    original_error = RuntimeError("encoding failed")
+
+    class FailingEmbeddingModel:
+        def encode(self, *_: object, **__: object) -> None:
+            raise original_error
+
+    manager = EmbeddingManager(model=FailingEmbeddingModel())
+
+    with pytest.raises(
+        EmbeddingServiceError,
+        match="embedding model could not generate embeddings",
+    ) as error_info:
+        manager.embed_query("How should the joint be supported?")
+
+    assert error_info.value.__cause__ is original_error

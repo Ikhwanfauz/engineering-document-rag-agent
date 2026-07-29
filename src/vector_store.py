@@ -43,6 +43,10 @@ class IndexingReport:
 DEFAULT_VECTOR_STORE_CONFIG = VectorStoreConfig()
 
 
+class VectorStoreServiceError(RuntimeError):
+    """Raised when the vector database cannot complete an operation."""
+
+
 class VectorStoreManager:
     """Store chunk embeddings and citation metadata in ChromaDB."""
 
@@ -103,13 +107,14 @@ class VectorStoreManager:
         stored_ids = self._document_chunk_ids(document.document_id)
 
         stale_ids = stored_ids - current_ids
-        if stale_ids:
-            self.collection.delete(ids=list(stale_ids))
-
         existing_ids = stored_ids & current_ids
         new_chunks = [
             chunk for chunk in all_chunks if chunk.chunk_id not in existing_ids
         ]
+
+        prepared_batches: list[
+            tuple[list[DocumentChunk], list[list[float]]]
+        ] = []
 
         for start in range(
             0,
@@ -121,13 +126,36 @@ class VectorStoreManager:
                 [chunk.text for chunk in batch],
                 show_progress=show_progress,
             )
+            prepared_batches.append((batch, batch_embeddings))
 
-            self.collection.upsert(
-                ids=[chunk.chunk_id for chunk in batch],
-                documents=[chunk.text for chunk in batch],
-                embeddings=batch_embeddings,
-                metadatas=[self._metadata_for_chunk(chunk) for chunk in batch],
-            )
+
+        written_ids: list[str] = []
+
+        for batch, batch_embeddings in prepared_batches:
+            batch_ids = [chunk.chunk_id for chunk in batch]
+
+            try:
+                self.collection.upsert(
+                    ids=batch_ids,
+                    documents=[chunk.text for chunk in batch],
+                    embeddings=batch_embeddings,
+                    metadatas=[
+                        self._metadata_for_chunk(chunk)
+                        for chunk in batch
+                    ],
+                )
+            except Exception as exc:
+                if written_ids:
+                    self.collection.delete(ids=written_ids)
+
+                raise VectorStoreServiceError(
+                    "The vector database could not write chunks"
+                ) from exc
+
+            written_ids.extend(batch_ids)
+
+        if stale_ids:
+            self.collection.delete(ids=list(stale_ids))
 
         return IndexingReport(
             document_id=document.document_id,
