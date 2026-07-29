@@ -385,6 +385,29 @@ Completion condition:
 - Common injection, file, path, and service-failure cases are handled safely.
 - Reliability behaviour is covered by automated tests.
 
+Verification result:
+
+- Focused reliability tests: 107 passed, 1 skipped.
+- Complete automated suite: 203 passed, 1 skipped.
+- Ruff: all checks passed.
+- Manual Ollama failure and recovery checks passed.
+
+Supported protections:
+
+- Common prompt-injection attempts are detected and handled safely.
+- Uploaded files, filenames, sizes, and resolved paths are validated.
+- LLM, embedding, and vector-database failures return controlled errors.
+- Existing indexed data remains available when embedding or writing fails.
+- Partial new writes are removed before an indexing failure is reported.
+- Stale chunks are deleted only after all replacement chunks are written.
+
+Known limitations:
+
+- Prompt-injection detection is rule-based and cannot guarantee detection of every possible attack.
+- Answer generation still depends on the configured Ollama service being available.
+- Index recovery covers tested application-level failures, but not sudden operating-system or hardware interruption.
+- Uploaded documents are validated for supported application use; this is not a general malware-scanning system.
+
 ---
 
 ## Version 9 — Maintenance-checklist agent [PLANNED]
