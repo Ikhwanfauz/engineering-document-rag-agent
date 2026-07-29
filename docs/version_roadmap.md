@@ -345,13 +345,16 @@ Completion condition:
 
 ## Version 8 — Guardrails and reliability [PLANNED]
 
-### Version 8A — Prompt-injection guardrails
+### Version 8A — Prompt-injection guardrails [COMPLETED]
 
-- Define basic prompt-injection patterns.
-- Detect suspicious instructions inside questions and documents.
-- Clearly separate trusted system instructions from retrieved document content.
-- Prevent document content from overriding system behaviour.
-- Add focused guardrail tests.
+- Added deterministic prompt-injection detection in `src/prompt_guardrails.py`.
+- Added patterns for instruction override, security bypass, prompt extraction, role reassignment, instruction replacement, and forged role markers.
+- Reject suspicious user questions before retrieval.
+- Remove suspicious document chunks before language-model generation.
+- Clearly separate trusted system instructions from untrusted questions and retrieved document content.
+- Prevent retrieved document content from overriding system behaviour.
+- Added focused guardrail and RAG pipeline integration tests.
+- Verified successfully with 29 focused tests, 156 full-project tests, and Ruff.
 
 ### Version 8B — File and path reliability
 
