@@ -29,6 +29,10 @@ from src.rag_pipeline import (
 from src.retriever import DocumentRetriever
 from src.text_chunker import ChunkingConfig, compute_document_id, process_document
 from src.vector_store import VectorStoreConfig, VectorStoreManager
+from src.file_safety import (
+    UnsafeFilePathError,
+    resolve_safe_file_path,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -208,10 +212,20 @@ def _get_managed_document(
     vector_store: VectorStoreManager,
 ) -> ManagedDocument:
     """Load one uploaded document and its current indexing status."""
-    safe_filename = Path(filename.replace("\\", "/")).name
-    pdf_path = UPLOAD_DIRECTORY / safe_filename
+    try:
+        pdf_path = resolve_safe_file_path(UPLOAD_DIRECTORY, filename)
+    except UnsafeFilePathError as error:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "code": "unsafe_file_path",
+                "message": str(error),
+            },
+        ) from error
 
-    if safe_filename != filename or not pdf_path.is_file():
+    safe_filename = pdf_path.name
+
+    if not pdf_path.is_file():
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={
@@ -307,7 +321,10 @@ def delete_document(filename: str) -> DeletedDocument:
 
     try:
         removed_chunks = vector_store.delete_document(document.document_id)
-        (UPLOAD_DIRECTORY / document.filename).unlink()
+        resolve_safe_file_path(
+            UPLOAD_DIRECTORY,
+            document.filename,
+        ).unlink()
     except OSError as exc:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -335,9 +352,8 @@ async def upload_document(
 ) -> UploadedDocument:
     """Validate and save an uploaded PDF manual."""
     original_filename = file.filename or ""
-    filename = Path(original_filename.replace("\\", "/")).name
 
-    if not filename or Path(filename).suffix.lower() != ".pdf":
+    if not original_filename or Path(original_filename).suffix.lower() != ".pdf":
         raise HTTPException(
             status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
             detail={
@@ -347,8 +363,21 @@ async def upload_document(
         )
 
     UPLOAD_DIRECTORY.mkdir(parents=True, exist_ok=True)
-    destination = UPLOAD_DIRECTORY / filename
+    try:
+        destination = resolve_safe_file_path(
+            UPLOAD_DIRECTORY,
+            original_filename,
+        )
+    except UnsafeFilePathError as error:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "code": "unsafe_file_path",
+                "message": str(error),
+            },
+        ) from error
 
+    filename = destination.name
     if destination.exists():
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -432,10 +461,20 @@ async def upload_document(
 )
 def index_uploaded_document(filename: str) -> IndexedDocument:
     """Process and index an uploaded PDF in ChromaDB."""
-    safe_filename = Path(filename.replace("\\", "/")).name
-    pdf_path = UPLOAD_DIRECTORY / safe_filename
+    try:
+        pdf_path = resolve_safe_file_path(UPLOAD_DIRECTORY, filename)
+    except UnsafeFilePathError as error:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "code": "unsafe_file_path",
+                "message": str(error),
+            },
+        ) from error
 
-    if safe_filename != filename or not pdf_path.is_file():
+    safe_filename = pdf_path.name
+
+    if not pdf_path.is_file():
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={

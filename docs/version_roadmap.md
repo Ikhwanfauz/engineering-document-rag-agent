@@ -356,13 +356,15 @@ Completion condition:
 - Added focused guardrail and RAG pipeline integration tests.
 - Verified successfully with 29 focused tests, 156 full-project tests, and Ruff.
 
-### Version 8B — File and path reliability
+### Version 8B — File and path reliability [COMPLETED]
 
-- Handle corrupted and unreadable PDFs safely.
-- Strengthen filename and path validation.
-- Handle empty, malformed, and oversized uploads.
-- Prevent unsafe file operations.
-- Add upload and path-security tests.
+- Added centralized filename and path validation in `src/file_safety.py`.
+- Reject empty filenames, path traversal, directory components, drive prefixes, control characters, trailing dots or spaces, and reserved Windows device names.
+- Ensure resolved document paths remain inside the permitted upload directory.
+- Protected document upload, lookup, indexing, and deletion operations.
+- Handle empty, oversized, non-PDF, corrupted, and unreadable uploads safely.
+- Added focused filename, path-security, symlink-escape, and API integration tests.
+- Verified successfully with 67 focused tests, 198 full-project tests, one expected Windows symlink skip, and Ruff.
 
 ### Version 8C — Service and recovery reliability
 

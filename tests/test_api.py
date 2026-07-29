@@ -307,6 +307,35 @@ def test_upload_rejects_unreadable_pdf(upload_directory: Path) -> None:
     assert response.json()["detail"]["code"] == "invalid_pdf"
     assert list(upload_directory.iterdir()) == []
 
+@pytest.mark.parametrize(
+    "filename",
+    [
+        "../manual.pdf",
+        "..\\manual.pdf",
+        "documents/manual.pdf",
+        "manual:stream.pdf",
+        "CON.pdf",
+    ],
+)
+def test_upload_rejects_unsafe_filename(
+    upload_directory: Path,
+    filename: str,
+) -> None:
+    response = client.post(
+        "/documents/upload",
+        files={
+            "file": (
+                filename,
+                create_pdf_bytes(),
+                "application/pdf",
+            )
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"]["code"] == "unsafe_file_path"
+    assert list(upload_directory.iterdir()) == []
+
 
 def test_index_endpoint_indexes_uploaded_pdf(
     upload_directory: Path,
@@ -682,6 +711,23 @@ def test_get_document_rejects_missing_document(
 
     assert response.status_code == 404
     assert response.json()["detail"]["code"] == "document_not_found"
+
+@pytest.mark.parametrize(
+    ("method", "url"),
+    [
+        ("GET", "/documents/CON.pdf"),
+        ("POST", "/documents/CON.pdf/index"),
+        ("DELETE", "/documents/CON.pdf"),
+    ],
+)
+def test_document_operations_reject_unsafe_filename(
+    method: str,
+    url: str,
+) -> None:
+    response = client.request(method, url)
+
+    assert response.status_code == 400
+    assert response.json()["detail"]["code"] == "unsafe_file_path"
 
 def test_submit_feedback_stores_positive_feedback(
     monkeypatch: pytest.MonkeyPatch,
