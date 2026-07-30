@@ -18,6 +18,11 @@ from database.db import (
     store_feedback,
     store_interaction,
 )
+from src.checklist_agent import (
+    ChecklistStage,
+    StructuredChecklist,
+    build_checklist_workflow,
+)
 from src.document_loader import PDFIngestionError, load_pdf
 from src.embedding_manager import EmbeddingConfig, EmbeddingManager
 from src.llm_provider import LLMServiceError, OllamaLLMProvider
@@ -136,6 +141,43 @@ class AnswerCitation(BaseModel):
     label: str
     excerpt: str
 
+class ChecklistRequest(BaseModel):
+    """Maintenance request and optional retrieval settings."""
+
+    request: str
+    document_id: str | None = None
+    top_k: int = 5
+    minimum_similarity: float = DEFAULT_MINIMUM_SIMILARITY
+
+
+class ChecklistItemResponse(BaseModel):
+    """One generated checklist item with page-level citations."""
+
+    text: str
+    citations: list[AnswerCitation]
+
+
+class GeneratedChecklistResponse(BaseModel):
+    """Structured maintenance checklist awaiting human review."""
+
+    prerequisites: list[ChecklistItemResponse]
+    tools: list[ChecklistItemResponse]
+    parts: list[ChecklistItemResponse]
+    safety_warnings: list[ChecklistItemResponse]
+    procedure_steps: list[ChecklistItemResponse]
+    review_notes: list[str]
+
+
+class ChecklistWorkflowResponse(BaseModel):
+    """Final response from the controlled checklist workflow."""
+
+    request: str
+    stage: ChecklistStage
+    evidence_sufficient: bool
+    missing_evidence_categories: list[str]
+    checklist: GeneratedChecklistResponse | None
+    human_review_required: bool
+
 class RetrievedEvidence(BaseModel):
     """Retrieved evidence chunk returned with a grounded answer."""
 
@@ -190,6 +232,39 @@ class DeletedDocument(BaseModel):
     document_id: str
     filename: str
     removed_chunks: int
+
+def _serialize_checklist(
+    checklist: StructuredChecklist,
+) -> GeneratedChecklistResponse:
+    """Convert the generated checklist into the API response model."""
+
+    def serialize_items(items) -> list[ChecklistItemResponse]:
+        return [
+            ChecklistItemResponse(
+                text=item.text,
+                citations=[
+                    AnswerCitation(
+                        document_id=citation.document_id,
+                        source_name=citation.source_name,
+                        page_number=citation.page_number,
+                        page_label=citation.page_label,
+                        label=citation.label,
+                        excerpt=citation.excerpt,
+                    )
+                    for citation in item.citations
+                ],
+            )
+            for item in items
+        ]
+
+    return GeneratedChecklistResponse(
+        prerequisites=serialize_items(checklist.prerequisites),
+        tools=serialize_items(checklist.tools),
+        parts=serialize_items(checklist.parts),
+        safety_warnings=serialize_items(checklist.safety_warnings),
+        procedure_steps=serialize_items(checklist.procedure_steps),
+        review_notes=list(checklist.review_notes),
+    )
 
 
 def _create_vector_store() -> VectorStoreManager:
@@ -669,6 +744,81 @@ def ask_question(request: QuestionRequest) -> QuestionAnswer:
         evidence=evidence,
         accepted_evidence_count=len(result.evidence),
         elapsed_seconds=round(elapsed_seconds, 3),
+    )
+
+@app.post(
+    "/checklists/generate",
+    response_model=ChecklistWorkflowResponse,
+    tags=["checklists"],
+)
+def generate_maintenance_checklist(
+    request: ChecklistRequest,
+) -> ChecklistWorkflowResponse:
+    """Generate a grounded checklist or abstain when evidence is incomplete."""
+    try:
+        vector_store = _create_vector_store()
+        retriever = DocumentRetriever(
+            vector_store.embedding_manager,
+            vector_store,
+)
+        llm_provider = OllamaLLMProvider(
+            model=LLM_MODEL_NAME,
+            base_url=OLLAMA_BASE_URL,
+            temperature=LLM_TEMPERATURE,
+            num_predict=2048,
+        )
+        workflow = build_checklist_workflow(
+            retriever=retriever,
+            llm_provider=llm_provider,
+            top_k=request.top_k,
+            minimum_similarity=request.minimum_similarity,
+        )
+        final_state = workflow.invoke(
+            {
+                "request": request.request,
+                "document_id": request.document_id,
+                "stage": ChecklistStage.REQUEST_RECEIVED,
+            }
+        )
+    except ValueError as error:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "code": "invalid_checklist_request",
+                "message": str(error),
+            },
+        ) from error
+    except LLMServiceError as error:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={
+                "code": "llm_service_unavailable",
+                "message": str(error),
+            },
+        ) from error
+
+    checklist = final_state.get("generated_checklist")
+    final_stage = final_state["stage"]
+
+    return ChecklistWorkflowResponse(
+        request=request.request,
+        stage=final_stage,
+        evidence_sufficient=final_state.get("evidence_sufficient", False),
+        missing_evidence_categories=[
+            category.value
+            for category in final_state.get(
+                "missing_evidence_categories",
+                (),
+            )
+        ],
+        checklist=(
+            _serialize_checklist(checklist)
+            if checklist is not None
+            else None
+        ),
+        human_review_required=(
+            final_stage is ChecklistStage.AWAITING_HUMAN_REVIEW
+        ),
     )
 
 @app.post(

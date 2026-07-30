@@ -12,6 +12,7 @@ import api.main as api_main
 from api.main import app
 from src.llm_provider import LLMServiceError
 from src.vector_store import IndexingReport
+from src.checklist_agent import EvidenceCategory
 
 client = TestClient(app)
 
@@ -113,10 +114,12 @@ class FakeLLMProvider:
         model: str,
         temperature: float,
         base_url: str,
+        num_predict: int = 256,
     ) -> None:
         self.model = model
         self.temperature = temperature
         self.base_url = base_url
+        self.num_predict = num_predict
 
 
 class FakeAnsweredRAGPipeline:
@@ -230,6 +233,59 @@ class FakeGroundingFailureRAGPipeline(FakeAnsweredRAGPipeline):
         raise api_main.GroundingValidationError(
             "Generated answer softened a mandatory document instruction"
         )
+
+class FakeCompletedChecklistWorkflow:
+    """Return a predictable checklist awaiting human review."""
+
+    def invoke(self, state: dict[str, object]) -> dict[str, object]:
+        citation = SimpleNamespace(
+            document_id=state.get("document_id") or "a" * 64,
+            source_name="manual.pdf",
+            page_number=50,
+            page_label="50",
+            label="manual.pdf, page 50",
+            excerpt="Support the joint before removing the clamp.",
+        )
+        checklist_item = SimpleNamespace(
+            text="Support the joint before removing the clamp.",
+            citations=(citation,),
+        )
+        checklist = SimpleNamespace(
+            prerequisites=(checklist_item,),
+            tools=(checklist_item,),
+            parts=(checklist_item,),
+            safety_warnings=(checklist_item,),
+            procedure_steps=(checklist_item,),
+            review_notes=("Human review is required before use.",),
+        )
+
+        return {
+            **state,
+            "stage": api_main.ChecklistStage.AWAITING_HUMAN_REVIEW,
+            "evidence_sufficient": True,
+            "missing_evidence_categories": (),
+            "generated_checklist": checklist,
+        }
+
+class FakeAbstainedChecklistWorkflow:
+    """Return a safe abstention when required evidence is missing."""
+
+    def invoke(self, state: dict[str, object]) -> dict[str, object]:
+        return {
+            **state,
+            "stage": api_main.ChecklistStage.ABSTAINED,
+            "evidence_sufficient": False,
+            "missing_evidence_categories": (
+                EvidenceCategory.TOOLS,
+                EvidenceCategory.PARTS,
+            ),
+        }
+
+class FakeInvalidChecklistWorkflow:
+    """Reject an invalid checklist request."""
+
+    def invoke(self, state: dict[str, object]) -> dict[str, object]:
+        raise ValueError("Checklist request cannot be empty")
 
 
 def test_health_endpoint_returns_ok() -> None:
@@ -634,6 +690,139 @@ def test_ask_endpoint_reports_grounding_validation_failure(
         "The generated answer failed grounding validation."
     )
     assert stored_interactions == []
+
+def test_checklist_endpoint_returns_grounded_checklist(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Return a cited checklist that requires human review."""
+    monkeypatch.setattr(api_main, "EmbeddingManager", FakeEmbeddingManager)
+    monkeypatch.setattr(
+        api_main,
+        "VectorStoreManager",
+        FakeVectorStoreManager,
+    )
+    monkeypatch.setattr(
+        api_main,
+        "DocumentRetriever",
+        FakeDocumentRetriever,
+    )
+    monkeypatch.setattr(api_main, "OllamaLLMProvider", FakeLLMProvider)
+    monkeypatch.setattr(
+        api_main,
+        "build_checklist_workflow",
+        lambda **kwargs: FakeCompletedChecklistWorkflow(),
+    )
+
+    document_id = "a" * 64
+    response = client.post(
+        "/checklists/generate",
+        json={
+            "request": "Create a clamp maintenance checklist.",
+            "document_id": document_id,
+            "top_k": 5,
+            "minimum_similarity": 0.6,
+        },
+    )
+
+    assert response.status_code == 200
+
+    payload = response.json()
+    assert payload["request"] == "Create a clamp maintenance checklist."
+    assert payload["stage"] == "awaiting_human_review"
+    assert payload["evidence_sufficient"] is True
+    assert payload["missing_evidence_categories"] == []
+    assert payload["human_review_required"] is True
+    assert payload["checklist"] is not None
+    assert payload["checklist"]["procedure_steps"][0]["text"] == (
+        "Support the joint before removing the clamp."
+    )
+    assert payload["checklist"]["procedure_steps"][0]["citations"][0] == {
+        "document_id": document_id,
+        "source_name": "manual.pdf",
+        "page_number": 50,
+        "page_label": "50",
+        "label": "manual.pdf, page 50",
+        "excerpt": "Support the joint before removing the clamp.",
+    }
+
+def test_checklist_endpoint_abstains_when_evidence_is_incomplete(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Abstain safely when required evidence categories are missing."""
+    monkeypatch.setattr(api_main, "EmbeddingManager", FakeEmbeddingManager)
+    monkeypatch.setattr(
+        api_main,
+        "VectorStoreManager",
+        FakeVectorStoreManager,
+    )
+    monkeypatch.setattr(
+        api_main,
+        "DocumentRetriever",
+        FakeDocumentRetriever,
+    )
+    monkeypatch.setattr(api_main, "OllamaLLMProvider", FakeLLMProvider)
+    monkeypatch.setattr(
+        api_main,
+        "build_checklist_workflow",
+        lambda **kwargs: FakeAbstainedChecklistWorkflow(),
+    )
+
+    response = client.post(
+        "/checklists/generate",
+        json={
+            "request": "Create a maintenance checklist.",
+            "top_k": 5,
+            "minimum_similarity": 0.6,
+        },
+    )
+
+    assert response.status_code == 200
+
+    payload = response.json()
+    assert payload["stage"] == "abstained"
+    assert payload["evidence_sufficient"] is False
+    assert payload["missing_evidence_categories"] == ["tools", "parts"]
+    assert payload["checklist"] is None
+    assert payload["human_review_required"] is False
+
+def test_checklist_endpoint_rejects_invalid_request(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Return HTTP 400 when checklist request validation fails."""
+    monkeypatch.setattr(api_main, "EmbeddingManager", FakeEmbeddingManager)
+    monkeypatch.setattr(
+        api_main,
+        "VectorStoreManager",
+        FakeVectorStoreManager,
+    )
+    monkeypatch.setattr(
+        api_main,
+        "DocumentRetriever",
+        FakeDocumentRetriever,
+    )
+    monkeypatch.setattr(api_main, "OllamaLLMProvider", FakeLLMProvider)
+    monkeypatch.setattr(
+        api_main,
+        "build_checklist_workflow",
+        lambda **kwargs: FakeInvalidChecklistWorkflow(),
+    )
+
+    response = client.post(
+        "/checklists/generate",
+        json={
+            "request": "",
+            "top_k": 5,
+            "minimum_similarity": 0.6,
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "detail": {
+            "code": "invalid_checklist_request",
+            "message": "Checklist request cannot be empty",
+        }
+    }
 
 
 def test_list_documents_returns_uploaded_pdfs(

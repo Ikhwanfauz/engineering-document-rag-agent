@@ -467,19 +467,28 @@ Completion result:
 - Verified 13 focused tests, 216 complete-project tests with 1 skipped, and full Ruff checks.
 - Documented the implementation in `docs/structured_checklist_generation.md`.
 
-### Version 9D — Agent testing and verification
+### Version 9D — Agent testing and verification ✅
 
-- Test complete, incomplete, and unsupported maintenance requests.
-- Verify workflow transitions and abstention.
-- Add API or dashboard access to the checklist workflow.
-- Run complete tests and Ruff.
-- Document and manually demonstrate the workflow.
-- Commit and push Version 9.
+Completed:
 
-Completion condition:
+- Added `POST /checklists/generate` API access to the controlled checklist workflow.
+- Added API tests for successful checklist generation, safe abstention, and invalid requests.
+- Verified structured checklist responses with page-level citations.
+- Verified mandatory human review for every generated checklist.
+- Verified safe abstention when required evidence categories are missing.
+- Manually demonstrated checklist generation for replacing clamp seals and rings.
+- Increased checklist generation capacity to prevent truncated JSON responses.
+- Verified 13 focused checklist tests.
+- Verified 219 complete-project tests with 1 skipped.
+- Verified all Ruff checks passed.
+- Documented the API workflow and verification in `docs/structured_checklist_generation.md`.
+
+Completion result:
 
 - The system generates a structured, cited maintenance checklist only when sufficient evidence exists.
+- Unsupported or incomplete requests safely abstain.
 - Human review remains mandatory.
+- Version 9 is complete.
 
 ---
 

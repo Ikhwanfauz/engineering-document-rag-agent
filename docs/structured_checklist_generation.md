@@ -57,3 +57,47 @@ Version 9C verification completed successfully:
 - Complete Ruff check: passed.
 
 The tests cover citation resolution, malformed JSON rejection, invented evidence-ID rejection, and the complete generation-to-human-review workflow.
+
+## API access
+
+Version 9D exposes the controlled checklist workflow through:
+
+```text
+POST /checklists/generate
+```
+
+The request accepts:
+
+- `request`: The maintenance task to convert into a checklist.
+- `document_id`: An optional document filter.
+- `top_k`: The retrieval result limit.
+- `minimum_similarity`: The minimum accepted evidence similarity.
+
+When all required evidence categories are available, the endpoint returns:
+
+- A structured checklist with page-level citations.
+- The `awaiting_human_review` workflow stage.
+- `evidence_sufficient` set to `true`.
+- `human_review_required` set to `true`.
+
+When required evidence is incomplete, the endpoint returns:
+
+- The `abstained` workflow stage.
+- The missing evidence categories.
+- No generated checklist.
+- `human_review_required` set to `false`.
+
+Invalid checklist requests return HTTP `400` with the error code
+`invalid_checklist_request`. Language-model service failures return HTTP `503`.
+
+## API verification
+
+The checklist API tests verify:
+
+- Grounded checklist serialization with page-level citations.
+- Mandatory human-review status for generated checklists.
+- Safe abstention when required evidence is missing.
+- HTTP `400` handling for invalid checklist requests.
+
+The complete API test file passed with 36 tests. The complete project verification
+passed with 219 tests and 1 skipped test. Ruff checks also passed.
