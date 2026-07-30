@@ -390,7 +390,7 @@ Verification result:
 - Focused reliability tests: 107 passed, 1 skipped.
 - Complete automated suite: 203 passed, 1 skipped.
 - Ruff: all checks passed.
-- Manual Ollama failure and recovery checks passed.
+- Representative manual prompt-injection, invalid-PDF, unsafe-path, and Ollama failure/recovery checks passed.
 
 Supported protections:
 
