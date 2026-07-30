@@ -430,12 +430,24 @@ Completion result:
 - Sufficient evidence reaches mandatory human review.
 - Insufficient evidence ends safely as `ABSTAINED`.
 
-### Version 9B — Maintenance evidence retrieval
+### Version 9B — Maintenance evidence retrieval ✅
 
 - Retrieve procedures, warnings, tools, parts, and prerequisites.
 - Preserve page-level citations for every evidence category.
-- Abstain when required information is missing.
+- Filter evidence below the minimum similarity threshold.
+- Remove prompt-injected evidence and its citations.
+- Detect categories that are empty or entirely absent.
+- Store categorized evidence and validation results in workflow state.
+- Route missing required information safely to `ABSTAINED`.
 
+Completion result:
+
+- Five-category maintenance evidence retrieval is operational.
+- Page-level citations are preserved for accepted evidence.
+- Unsafe and insufficient evidence is excluded.
+- LangGraph performs real retrieval and validation when a retriever is provided.
+- Sufficient evidence reaches mandatory human review.
+- Full verification passed with `212 passed, 1 skipped`; Ruff passed.
 ### Version 9C — Structured checklist generation
 
 - Generate ordered maintenance steps.
