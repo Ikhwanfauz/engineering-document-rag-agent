@@ -412,12 +412,23 @@ Known limitations:
 
 ## Version 9 — Maintenance-checklist agent [PLANNED]
 
-### Version 9A — Controlled workflow foundation
+### Version 9A — Controlled workflow foundation [COMPLETED]
 
-- Add LangGraph.
-- Define a controlled checklist-generation workflow.
-- Define workflow state and permitted transitions.
-- Keep the existing RAG pipeline as the evidence source.
+- Added LangGraph for the maintenance-checklist workflow.
+- Defined explicit workflow stages and permitted transitions.
+- Added controlled branching based on evidence sufficiency.
+- Route sufficient evidence toward mandatory human review.
+- Route insufficient evidence toward safe abstention.
+- Kept the existing RAG pipeline unchanged as the future evidence source.
+- Added focused workflow-transition and routing tests.
+- Verified successfully with 4 focused tests, 207 full-project tests, one expected skip, and Ruff.
+
+Completion result:
+
+- The controlled LangGraph workflow is operational.
+- Invalid workflow-stage jumps are rejected.
+- Sufficient evidence reaches mandatory human review.
+- Insufficient evidence ends safely as `ABSTAINED`.
 
 ### Version 9B — Maintenance evidence retrieval
 
