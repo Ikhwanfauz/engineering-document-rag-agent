@@ -19,6 +19,8 @@ langchain-ollama
 # Document ingestion and retrieval
 pypdf
 pymupdf
+numpy
+easyocr
 chromadb
 sentence-transformers
 

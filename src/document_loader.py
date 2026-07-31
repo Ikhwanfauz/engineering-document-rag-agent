@@ -9,10 +9,35 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Mapping
+from typing import Mapping, Protocol
 
+import numpy as np
 import pymupdf
+
 MIN_DIGITAL_TEXT_CHARACTERS = 20
+
+class OCRReader(Protocol):
+    def readtext(
+        self,
+        image: np.ndarray,
+        detail: int,
+        paragraph: bool,
+    ) -> list[str]: ...
+
+
+def extract_text_with_ocr(
+    page: pymupdf.Page,
+    reader: OCRReader,
+) -> str:
+    pixmap = page.get_pixmap(matrix=pymupdf.Matrix(2, 2), alpha=False)
+    image = np.frombuffer(pixmap.samples, dtype=np.uint8).reshape(
+        pixmap.height,
+        pixmap.width,
+        pixmap.n,
+    )
+    results = reader.readtext(image, detail=0, paragraph=True)
+    cleaned_lines = [line.strip() for line in results if line.strip()]
+    return "\n".join(cleaned_lines)
 
 
 class PDFIngestionError(RuntimeError):
@@ -86,7 +111,10 @@ def _validate_pdf_path(path: str | Path) -> Path:
     return pdf_path
 
 
-def load_pdf(path: str | Path) -> LoadedPDF:
+def load_pdf(
+    path: str | Path,
+    ocr_reader: OCRReader | None = None,
+) -> LoadedPDF:
     """Extract a PDF into ordered pages with stable citation metadata.
 
     Physical page numbers are one-based. ``page_label`` preserves a label
@@ -132,6 +160,12 @@ def load_pdf(path: str | Path) -> LoadedPDF:
                 and len(text) < MIN_DIGITAL_TEXT_CHARACTERS
             )
             extraction_method = "digital_text" if text else "none"
+
+            if is_scanned and ocr_reader is not None:
+                ocr_text = extract_text_with_ocr(page, ocr_reader)
+                if ocr_text:
+                    text = ocr_text
+                    extraction_method = "ocr"
 
             page_label = (page.get_label() or str(page_number)).strip()
             pages.append(

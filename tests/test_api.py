@@ -105,6 +105,27 @@ class FakeDocumentRetriever:
         self.embedding_manager = embedding_manager
         self.vector_store = vector_store
 
+class FakeOCRReader:
+    """Avoid loading the real EasyOCR model during API tests."""
+
+    def readtext(
+        self,
+        _image: object,
+        detail: int,
+        paragraph: bool,
+    ) -> list[str]:
+        assert detail == 0
+        assert paragraph is True
+        return []
+
+
+@pytest.fixture(autouse=True)
+def fake_ocr_reader(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Prevent EasyOCR from loading during API tests."""
+    monkeypatch.setattr(api_main, "get_ocr_reader", FakeOCRReader)
+
 
 class FakeLLMProvider:
     """Avoid connecting to Ollama during API tests."""

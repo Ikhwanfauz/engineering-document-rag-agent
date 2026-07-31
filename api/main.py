@@ -6,10 +6,12 @@ import sqlite3
 import hashlib
 import logging
 import time
+from functools import lru_cache
 from pathlib import Path
 from typing import Annotated
 from uuid import uuid4
 
+import easyocr
 from fastapi import FastAPI, File, HTTPException, UploadFile, status
 from pydantic import BaseModel
 from database.db import (
@@ -53,6 +55,13 @@ LLM_MODEL_NAME = "qwen3:8b"
 OLLAMA_BASE_URL = "http://localhost:11434"
 LLM_TEMPERATURE = 0.0
 DEFAULT_TOP_K = 3
+
+
+@lru_cache(maxsize=1)
+def get_ocr_reader() -> easyocr.Reader:
+    """Create and reuse one GPU-enabled EasyOCR reader."""
+    return easyocr.Reader(["en"], gpu=True)
+
 
 app = FastAPI(
     title="Engineering Document RAG Agent API",
@@ -561,7 +570,10 @@ def index_uploaded_document(filename: str) -> IndexedDocument:
     started_at = time.perf_counter()
 
     try:
-        loaded_document = load_pdf(pdf_path)
+        loaded_document = load_pdf(
+            pdf_path,
+            ocr_reader=get_ocr_reader(),
+        )
 
         processed_document = process_document(
             loaded_document,

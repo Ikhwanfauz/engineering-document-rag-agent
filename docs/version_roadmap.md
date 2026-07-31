@@ -510,12 +510,25 @@ Completion result:
 - Verified 6 focused loader tests and 221 complete-project tests with 1 skipped.
 - Verified all Ruff and Git whitespace checks passed.
 
-### Version 10B — OCR fallback
+### Version 10B — OCR fallback ✅
 
 - Add OCR for image-only pages.
 - Normalize OCR output for chunking.
 - Preserve document and page metadata.
 - Prevent duplicate digital-text and OCR content.
+
+Completion result:
+
+- Added EasyOCR fallback for scanned and image-only pages during indexing.
+- Rendered scanned pages into image arrays and normalized OCR output into clean text lines for chunking.
+- Preserved document identity, physical page numbers, page labels, and scanned-page metadata.
+- Kept valid digital text as the preferred extraction method to prevent duplicate digital and OCR content.
+- Added a cached GPU-enabled OCR reader that is reused across indexing requests.
+- Added focused loader and API tests using lightweight fake OCR readers.
+- Recorded NumPy and EasyOCR as direct project dependencies.
+- Verified 44 focused loader and API tests.
+- Verified 223 complete-project tests passed with 1 skipped.
+- Verified all Ruff checks passed.
 
 ### Version 10C — OCR quality and warnings
 

@@ -5,7 +5,7 @@ from pathlib import Path
 import pymupdf
 import pytest
 
-from src.document_loader import PDFIngestionError, load_pdf
+from src.document_loader import PDFIngestionError, extract_text_with_ocr, load_pdf
 
 
 def _create_test_pdf(path: Path) -> None:
@@ -115,3 +115,60 @@ def test_load_pdf_detects_scanned_page_with_little_digital_text(
     assert scanned_page.has_text is True
     assert scanned_page.is_scanned is True
     assert scanned_page.extraction_method == "digital_text"
+
+
+def test_extract_text_with_ocr_returns_clean_text() -> None:
+    class FakeOCRReader:
+        def readtext(
+            self,
+            _image: object,
+            detail: int,
+            paragraph: bool,
+        ) -> list[str]:
+            assert detail == 0
+            assert paragraph is True
+            return [
+                " Disconnect power first. ",
+                "",
+                "Wear protective gloves.",
+            ]
+
+    document = pymupdf.open()
+    page = document.new_page()
+
+    try:
+        text = extract_text_with_ocr(page, FakeOCRReader())
+    finally:
+        document.close()
+
+    assert text == "Disconnect power first.\nWear protective gloves."
+
+def test_load_pdf_uses_ocr_fallback_for_scanned_page(tmp_path: Path) -> None:
+    class FakeOCRReader:
+        def readtext(
+            self,
+            _image: object,
+            detail: int,
+            paragraph: bool,
+        ) -> list[str]:
+            assert detail == 0
+            assert paragraph is True
+            return ["Emergency stop procedure."]
+
+    pdf_path = tmp_path / "scanned.pdf"
+    image = pymupdf.Pixmap(pymupdf.csRGB, (0, 0, 200, 200), False)
+    image.clear_with(255)
+
+    document = pymupdf.open()
+    page = document.new_page()
+    page.insert_image(page.rect, stream=image.tobytes("png"))
+    document.save(pdf_path)
+    document.close()
+
+    result = load_pdf(pdf_path, ocr_reader=FakeOCRReader())
+
+    scanned_page = result.pages[0]
+    assert scanned_page.text == "Emergency stop procedure."
+    assert scanned_page.has_text is True
+    assert scanned_page.is_scanned is True
+    assert scanned_page.extraction_method == "ocr"
