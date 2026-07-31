@@ -563,14 +563,24 @@ Completion result:
 
 ## Version 11 — Docker, documentation, and final release [PLANNED]
 
-### Version 11A — Containerization
+### Version 11A — Containerization [COMPLETE]
 
-- Containerize FastAPI.
-- Containerize Streamlit.
-- Define persistent storage for documents, ChromaDB, and SQLite.
-- Configure service communication using Docker Compose.
-- Document Ollama connection requirements.
+- Containerized FastAPI and Streamlit using a shared Docker image.
+- Added Docker Compose configuration for starting both services together.
+- Configured Streamlit-to-FastAPI communication through the Docker network.
+- Configured FastAPI to connect to Ollama running on the host machine.
+- Added persistent storage for documents, ChromaDB, and SQLite data.
+- Added Docker build exclusions for local data, environments, caches, and Git files.
 
+Completion result:
+
+- FastAPI and Streamlit containers build and start successfully through Docker Compose.
+- The dashboard connects successfully to the containerized API.
+- The API container connects successfully to Ollama and detects the installed models.
+- A complete grounded question-answering workflow succeeded with citations and feedback.
+- Indexed documents remained available after container recreation.
+- Full project tests passed: 227 passed, 1 skipped.
+- Ruff passed with no issues.
 ### Version 11B — Deployment verification
 
 - Build all containers from a clean environment.

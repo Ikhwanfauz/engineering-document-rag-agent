@@ -31,6 +31,7 @@ results/logs/*
 !results/logs/README.md
 database/*.db
 database/*.db-*
+data/database/
 
 # Build and coverage
 build/

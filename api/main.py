@@ -5,6 +5,7 @@ from __future__ import annotations
 import sqlite3
 import hashlib
 import logging
+import os
 import time
 from functools import lru_cache
 from pathlib import Path
@@ -52,7 +53,10 @@ EMBEDDING_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 CHUNK_SIZE = 1000
 CHUNK_OVERLAP = 150
 LLM_MODEL_NAME = "qwen3:8b"
-OLLAMA_BASE_URL = "http://localhost:11434"
+OLLAMA_BASE_URL = os.getenv(
+    "OLLAMA_BASE_URL",
+    "http://localhost:11434",
+)
 LLM_TEMPERATURE = 0.0
 DEFAULT_TOP_K = 3
 
