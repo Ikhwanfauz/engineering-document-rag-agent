@@ -492,13 +492,23 @@ Completion result:
 
 ---
 
-## Version 10 — Scanned PDF and OCR support [PLANNED]
+## Version 10 — Scanned PDF and OCR support [IN PROGRESS]
 
-### Version 10A — Scanned-page detection
+### Version 10A — Scanned-page detection ✅
 
 - Detect pages with little or no extractable digital text.
 - Distinguish digital-text pages from image-only pages.
 - Record extraction-method metadata.
+
+Completion result:
+
+- Added page-level scanned-content detection.
+- Distinguished digital-text, image-only scanned, and blank pages.
+- Detected image-based pages containing fewer than 20 digital-text characters.
+- Recorded `is_scanned` and `extraction_method` metadata for every page.
+- Added focused tests for digital-text, blank, image-only, and low-text scanned pages.
+- Verified 6 focused loader tests and 221 complete-project tests with 1 skipped.
+- Verified all Ruff and Git whitespace checks passed.
 
 ### Version 10B — OCR fallback
 

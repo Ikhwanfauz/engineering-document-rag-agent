@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Mapping
 
 import pymupdf
+MIN_DIGITAL_TEXT_CHARACTERS = 20
 
 
 class PDFIngestionError(RuntimeError):
@@ -26,6 +27,8 @@ class PDFPage:
     page_number: int
     page_label: str
     text: str
+    is_scanned: bool = False
+    extraction_method: str = "digital_text"
 
     @property
     def char_count(self) -> int:
@@ -123,6 +126,13 @@ def load_pdf(path: str | Path) -> LoadedPDF:
                     f"Failed to extract page {page_number} from {pdf_path.name}"
                 ) from exc
 
+            has_embedded_images = bool(page.get_images(full=True))
+            is_scanned = (
+                has_embedded_images
+                and len(text) < MIN_DIGITAL_TEXT_CHARACTERS
+            )
+            extraction_method = "digital_text" if text else "none"
+
             page_label = (page.get_label() or str(page_number)).strip()
             pages.append(
                 PDFPage(
@@ -130,6 +140,8 @@ def load_pdf(path: str | Path) -> LoadedPDF:
                     page_number=page_number,
                     page_label=page_label,
                     text=text,
+                    is_scanned=is_scanned,
+                    extraction_method=extraction_method,
                 )
             )
 
