@@ -310,11 +310,12 @@ def retrieve_categorized_evidence(
             document_id=document_id,
         )
         accepted_chunks = tuple(
-            chunk
-            for chunk in retrieved_chunks
-            if chunk.similarity_score >= minimum_similarity
-            and not contains_prompt_injection(chunk.text)
-        )
+                chunk
+                for chunk in retrieved_chunks
+                if chunk.similarity_score >= minimum_similarity
+                and chunk.ocr_quality_warning is None
+                and not contains_prompt_injection(chunk.text)
+            )
 
         categorized_evidence.append(
             CategorizedEvidence(

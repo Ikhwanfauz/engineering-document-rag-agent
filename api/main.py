@@ -199,6 +199,8 @@ class RetrievedEvidence(BaseModel):
     text: str
     distance: float
     similarity_score: float
+    ocr_quality_score: float | None
+    ocr_quality_warning: str | None
     citation: str
 
 
@@ -715,6 +717,8 @@ def ask_question(request: QuestionRequest) -> QuestionAnswer:
             text=chunk.text,
             distance=chunk.distance,
             similarity_score=chunk.similarity_score,
+            ocr_quality_score=getattr(chunk, "ocr_quality_score", None),
+            ocr_quality_warning=getattr(chunk, "ocr_quality_warning", None),
             citation=chunk.citation,
         )
         for chunk in result.evidence

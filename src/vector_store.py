@@ -77,7 +77,24 @@ class VectorStoreManager:
     def _metadata_for_chunk(
         self,
         chunk: DocumentChunk,
-    ) -> dict[str, str | int]:
+    ) -> dict[str, str | int | float]:
+        metadata: dict[str, str | int | float] = {
+            "document_id": chunk.document_id,
+            "source_name": chunk.source_name,
+            "page_number": chunk.page_number,
+            "page_label": chunk.page_label,
+            "chunk_index": chunk.chunk_index,
+            "char_count": chunk.char_count,
+            "embedding_model": self.embedding_manager.config.model_name,
+        }
+
+        if chunk.ocr_quality_score is not None:
+            metadata["ocr_quality_score"] = chunk.ocr_quality_score
+
+        if chunk.ocr_quality_warning is not None:
+            metadata["ocr_quality_warning"] = chunk.ocr_quality_warning
+
+        return metadata
         return {
             "document_id": chunk.document_id,
             "source_name": chunk.source_name,

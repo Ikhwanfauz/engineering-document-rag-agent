@@ -134,6 +134,15 @@ engineering-document-rag-agent/
 - [Grounded question answering](docs/grounded_qa.md)
 - [Don't-know handling](docs/dont_know_handling.md)
 
+## OCR limitations
+
+- OCR accuracy depends on scan resolution, image clarity, page orientation, fonts, and document layout.
+- Complex tables, diagrams, handwritten text, and damaged pages may not be extracted reliably.
+- OCR processing is slower than extracting native digital PDF text.
+- Low-confidence OCR evidence is rejected from answer and checklist generation.
+- OCR quality scores and warnings help identify uncertain text, but important engineering instructions must still be verified against the original PDF.
+
+
 ## Current boundary
 
 Version 3B prevents unsupported generation when retrieved evidence does not meet the calibrated minimum similarity of `0.60`. During abstention, the pipeline skips the LLM and returns no citations.

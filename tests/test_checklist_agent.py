@@ -243,6 +243,40 @@ def test_retrieve_categorized_evidence_removes_prompt_injection() -> None:
         for evidence in categorized_evidence
     )
 
+def test_retrieve_categorized_evidence_removes_low_confidence_ocr() -> None:
+    low_confidence_chunk = RetrievedChunk(
+        chunk_id="chunk-low-confidence",
+        document_id="manual-1",
+        source_name="service_manual.pdf",
+        page_number=51,
+        page_label="51",
+        chunk_index=2,
+        text="Unclear maintenance instruction.",
+        distance=0.10,
+        similarity_score=0.90,
+        ocr_quality_score=0.55,
+        ocr_quality_warning=(
+            "Low OCR confidence; verify this evidence against the source PDF."
+        ),
+    )
+    retriever = StubEvidenceRetriever((low_confidence_chunk,))
+
+    categorized_evidence = retrieve_categorized_evidence(
+        retriever,
+        "Create a maintenance checklist",
+        document_id="manual-1",
+    )
+
+    assert all(
+        evidence.chunks == ()
+        for evidence in categorized_evidence
+    )
+    assert all(
+        evidence.citations == ()
+        for evidence in categorized_evidence
+    )
+
+
 def test_validate_categorized_evidence_detects_absent_category() -> None:
     chunk = make_retrieved_chunk()
     categorized_evidence = tuple(

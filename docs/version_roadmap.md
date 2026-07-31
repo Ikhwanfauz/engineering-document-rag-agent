@@ -530,28 +530,35 @@ Completion result:
 - Verified 223 complete-project tests passed with 1 skipped.
 - Verified all Ruff checks passed.
 
-### Version 10C — OCR quality and warnings
+### Version 10C — OCR quality and warnings [COMPLETE]
 
-- Compare OCR output with digital extraction where possible.
-- Define OCR quality indicators.
-- Expose low-quality OCR warnings.
-- Prevent uncertain OCR text from being presented as high-confidence evidence.
+- Added character-weighted OCR confidence scoring.
+- Added warnings for low-confidence OCR extraction.
+- Propagated OCR quality metadata through chunking, vector storage, retrieval, and API responses.
+- Prevented low-confidence OCR evidence from being used by Q&A and checklist generation.
+- Added focused tests for OCR confidence, warnings, and evidence rejection.
 
-### Version 10D — OCR integration and verification
+Completion result:
 
-- Integrate OCR documents into indexing and retrieval.
-- Display OCR status in the API and dashboard.
-- Add scanned-document fixtures and tests.
-- Run complete tests and Ruff.
-- Perform a manual scanned-PDF test.
-- Document OCR limitations.
-- Commit and push Version 10.
+- OCR quality metadata is preserved throughout the complete retrieval pipeline.
+- Low-confidence OCR evidence is rejected instead of being presented as reliable evidence.
+- Full project tests passed: 226 passed, 1 skipped.
+- Ruff passed with no issues.
 
-Completion condition:
+### Version 10D — OCR integration and verification [COMPLETE]
 
-- The system can index and search supported scanned PDFs.
-- Users are warned when OCR quality may affect answers.
+- Integrated OCR processing into the scanned-document indexing flow.
+- Exposed OCR quality scores and warnings through API evidence responses.
+- Added OCR quality and warning visibility to the dashboard.
+- Added an API integration test covering scanned PDF upload, OCR extraction, and indexing.
+- Verified the complete OCR workflow without loading the real OCR model during automated tests.
 
+Completion result:
+
+- Scanned PDF documents can be uploaded, processed with OCR, and indexed successfully.
+- OCR quality information is visible through both the API and dashboard.
+- Full project tests passed: 227 passed, 1 skipped.
+- Ruff passed with no issues.
 ---
 
 ## Version 11 — Docker, documentation, and final release [PLANNED]

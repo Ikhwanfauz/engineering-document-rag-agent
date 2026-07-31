@@ -308,6 +308,24 @@ def render_question_answer() -> None:
         f"{result['elapsed_seconds']:.3f} s",
     )
 
+    evidence = result.get("evidence", [])
+
+    if evidence:
+        st.markdown("#### Evidence quality")
+
+        for item in evidence:
+            quality_score = item.get("ocr_quality_score")
+            quality_warning = item.get("ocr_quality_warning")
+
+            if quality_score is not None:
+                st.caption(
+                    f"{item['source_name']} — page {item['page_label']} "
+                    f"— OCR quality: {quality_score:.2f}"
+                )
+
+            if quality_warning:
+                st.warning(quality_warning)
+
     citations = result["citations"]
 
     if citations:

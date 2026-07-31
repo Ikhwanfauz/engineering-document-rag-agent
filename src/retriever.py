@@ -22,6 +22,8 @@ class RetrievedChunk:
     text: str
     distance: float
     similarity_score: float
+    ocr_quality_score: float | None = None
+    ocr_quality_warning: str | None = None
 
     @property
     def citation(self) -> str:
@@ -101,6 +103,16 @@ class DocumentRetriever:
                     text=str(text),
                     distance=distance_value,
                     similarity_score=1.0 - distance_value,
+                    ocr_quality_score=(
+                        float(metadata["ocr_quality_score"])
+                        if metadata.get("ocr_quality_score") is not None
+                        else None
+                    ),
+                    ocr_quality_warning=(
+                        str(metadata["ocr_quality_warning"])
+                        if metadata.get("ocr_quality_warning") is not None
+                        else None
+                    ),
                 )
             )
 

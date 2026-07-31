@@ -13,6 +13,7 @@ from src.text_chunker import (
     process_document,
     save_processed_document,
 )
+from api.main import get_ocr_reader
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -62,7 +63,10 @@ def main() -> int:
             chunk_size=args.chunk_size,
             chunk_overlap=args.chunk_overlap,
         )
-        loaded_document = load_pdf(args.pdf_path)
+        loaded_document = load_pdf(
+            args.pdf_path,
+            ocr_reader=get_ocr_reader(),
+        )
         processed_document = process_document(loaded_document, config)
         output_path = save_processed_document(
             processed_document,
@@ -93,7 +97,11 @@ def main() -> int:
     cleaned_non_whitespace = sum(
         len(re.sub(r"\s+", "", page.cleaned_text)) for page in processed_document.pages
     )
-    content_retention = cleaned_non_whitespace / original_non_whitespace * 100
+    content_retention = (
+    cleaned_non_whitespace / original_non_whitespace * 100
+    if original_non_whitespace
+    else None
+)
 
     print("PDF processing completed.")
     print(f"Source: {processed_document.source_name}")
@@ -101,7 +109,10 @@ def main() -> int:
     print(f"Physical pages: {processed_document.page_count}")
     print(f"Original characters: {loaded_document.total_characters:,}")
     print(f"Cleaned characters: {processed_document.cleaned_character_count:,}")
-    print(f"Non-whitespace content retained: {content_retention:.2f}%")
+    if content_retention is None:
+        print("Non-whitespace content retained: not applicable (no digital source text)")
+    else:
+        print(f"Non-whitespace content retained: {content_retention:.2f}%")
     print(f"Removed margin occurrences: {removed_line_count}")
     print(f"Unique removed margin lines: {len(removed_unique_lines)}")
     print(f"Chunk size: {config.chunk_size}")

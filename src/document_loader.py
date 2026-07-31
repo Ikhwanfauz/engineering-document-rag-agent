@@ -28,16 +28,39 @@ class OCRReader(Protocol):
 def extract_text_with_ocr(
     page: pymupdf.Page,
     reader: OCRReader,
-) -> str:
+) -> tuple[str, float | None]:
+    """Extract OCR text and calculate a character-weighted confidence score."""
     pixmap = page.get_pixmap(matrix=pymupdf.Matrix(2, 2), alpha=False)
     image = np.frombuffer(pixmap.samples, dtype=np.uint8).reshape(
         pixmap.height,
         pixmap.width,
         pixmap.n,
     )
-    results = reader.readtext(image, detail=0, paragraph=True)
-    cleaned_lines = [line.strip() for line in results if line.strip()]
-    return "\n".join(cleaned_lines)
+    results = reader.readtext(image, detail=1, paragraph=False)
+
+    cleaned_lines: list[str] = []
+    weighted_confidence = 0.0
+    total_characters = 0
+
+    for _, raw_text, confidence in results:
+        text = str(raw_text).strip()
+        if not text:
+            continue
+
+        confidence_value = max(0.0, min(1.0, float(confidence)))
+        character_count = len(text)
+
+        cleaned_lines.append(text)
+        weighted_confidence += confidence_value * character_count
+        total_characters += character_count
+
+    quality_score = (
+        weighted_confidence / total_characters
+        if total_characters > 0
+        else None
+    )
+
+    return "\n".join(cleaned_lines), quality_score
 
 
 class PDFIngestionError(RuntimeError):
@@ -54,6 +77,8 @@ class PDFPage:
     text: str
     is_scanned: bool = False
     extraction_method: str = "digital_text"
+    ocr_quality_score: float | None = None
+    ocr_quality_warning: str | None = None
 
     @property
     def char_count(self) -> int:
@@ -160,12 +185,26 @@ def load_pdf(
                 and len(text) < MIN_DIGITAL_TEXT_CHARACTERS
             )
             extraction_method = "digital_text" if text else "none"
+            ocr_quality_score: float | None = None
+            ocr_quality_warning: str | None = None
 
             if is_scanned and ocr_reader is not None:
-                ocr_text = extract_text_with_ocr(page, ocr_reader)
+                ocr_text, ocr_quality_score = extract_text_with_ocr(
+                    page,
+                    ocr_reader,
+                )
                 if ocr_text:
                     text = ocr_text
                     extraction_method = "ocr"
+
+                    if (
+                        ocr_quality_score is not None
+                        and ocr_quality_score < 0.70
+                    ):
+                        ocr_quality_warning = (
+                            "Low OCR confidence; verify this evidence "
+                            "against the source PDF."
+                        )
 
             page_label = (page.get_label() or str(page_number)).strip()
             pages.append(
@@ -176,6 +215,8 @@ def load_pdf(
                     text=text,
                     is_scanned=is_scanned,
                     extraction_method=extraction_method,
+                    ocr_quality_score=ocr_quality_score,
+                    ocr_quality_warning=ocr_quality_warning,
                 )
             )
 

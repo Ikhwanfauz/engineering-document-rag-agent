@@ -54,6 +54,8 @@ class ProcessedPage:
     original_char_count: int
     cleaned_text: str
     removed_margin_lines: tuple[str, ...]
+    ocr_quality_score: float | None = None
+    ocr_quality_warning: str | None = None
 
     @property
     def cleaned_char_count(self) -> int:
@@ -71,6 +73,8 @@ class DocumentChunk:
     page_label: str
     chunk_index: int
     text: str
+    ocr_quality_score: float | None = None
+    ocr_quality_warning: str | None = None
 
     @property
     def char_count(self) -> int:
@@ -543,6 +547,8 @@ def clean_page(
         original_char_count=page.char_count,
         cleaned_text=cleaned_text,
         removed_margin_lines=tuple(removed_lines),
+        ocr_quality_score=page.ocr_quality_score,
+        ocr_quality_warning=page.ocr_quality_warning,
     )
 
 
@@ -599,6 +605,8 @@ def process_document(
                     page_label=page.page_label,
                     chunk_index=chunk_index,
                     text=chunk_text,
+                    ocr_quality_score=processed_page.ocr_quality_score,
+                    ocr_quality_warning=processed_page.ocr_quality_warning,
                 )
             )
 

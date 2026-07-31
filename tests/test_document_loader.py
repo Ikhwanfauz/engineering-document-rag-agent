@@ -124,24 +124,32 @@ def test_extract_text_with_ocr_returns_clean_text() -> None:
             _image: object,
             detail: int,
             paragraph: bool,
-        ) -> list[str]:
-            assert detail == 0
-            assert paragraph is True
+        ) -> list[tuple[object, str, float]]:
+            assert detail == 1
+            assert paragraph is False
             return [
-                " Disconnect power first. ",
-                "",
-                "Wear protective gloves.",
+                (None, " Disconnect power first. ", 0.90),
+                (None, "", 0.10),
+                (None, "Wear protective gloves.", 0.80),
             ]
 
     document = pymupdf.open()
     page = document.new_page()
 
     try:
-        text = extract_text_with_ocr(page, FakeOCRReader())
+        text, quality_score = extract_text_with_ocr(
+            page,
+            FakeOCRReader(),
+        )
     finally:
         document.close()
 
-    assert text == "Disconnect power first.\nWear protective gloves."
+    assert text == (
+        "Disconnect power first.\n"
+        "Wear protective gloves."
+    )
+    assert quality_score == pytest.approx(0.85)
+
 
 def test_load_pdf_uses_ocr_fallback_for_scanned_page(tmp_path: Path) -> None:
     class FakeOCRReader:
@@ -150,7 +158,12 @@ def test_load_pdf_uses_ocr_fallback_for_scanned_page(tmp_path: Path) -> None:
             _image: object,
             detail: int,
             paragraph: bool,
-        ) -> list[str]:
+        ) -> list[tuple[object, str, float]]:
+            assert detail == 1
+            assert paragraph is False
+            return [
+                (None, "Emergency stop procedure.", 0.95),
+            ]
             assert detail == 0
             assert paragraph is True
             return ["Emergency stop procedure."]
@@ -172,3 +185,37 @@ def test_load_pdf_uses_ocr_fallback_for_scanned_page(tmp_path: Path) -> None:
     assert scanned_page.has_text is True
     assert scanned_page.is_scanned is True
     assert scanned_page.extraction_method == "ocr"
+
+
+def test_load_pdf_flags_low_confidence_ocr(tmp_path: Path) -> None:
+    class FakeOCRReader:
+        def readtext(
+            self,
+            _image: object,
+            detail: int,
+            paragraph: bool,
+        ) -> list[tuple[object, str, float]]:
+            assert detail == 1
+            assert paragraph is False
+            return [
+                (None, "Unclear maintenance instruction.", 0.55),
+            ]
+
+    pdf_path = tmp_path / "low-confidence-scanned.pdf"
+    image = pymupdf.Pixmap(pymupdf.csRGB, (0, 0, 200, 200), False)
+    image.clear_with(255)
+
+    document = pymupdf.open()
+    page = document.new_page()
+    page.insert_image(page.rect, stream=image.tobytes("png"))
+    document.save(pdf_path)
+    document.close()
+
+    result = load_pdf(pdf_path, ocr_reader=FakeOCRReader())
+    loaded_page = result.pages[0]
+
+    assert loaded_page.extraction_method == "ocr"
+    assert loaded_page.ocr_quality_score == pytest.approx(0.55)
+    assert loaded_page.ocr_quality_warning == (
+        "Low OCR confidence; verify this evidence against the source PDF."
+    )

@@ -114,11 +114,12 @@ class RAGPipeline:
         )
 
         evidence = tuple(
-            chunk
-            for chunk in evidence
-            if chunk.similarity_score >= self.minimum_similarity
-            and not contains_prompt_injection(chunk.text)
-        )
+                chunk
+                for chunk in evidence
+                if chunk.similarity_score >= self.minimum_similarity
+                and chunk.ocr_quality_warning is None
+                and not contains_prompt_injection(chunk.text)
+            )
         if not evidence:
             return GroundedAnswer(
                 question=question,

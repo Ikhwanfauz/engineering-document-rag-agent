@@ -113,6 +113,30 @@ def test_pipeline_abstains_without_evidence_and_does_not_call_llm() -> None:
     assert llm_provider.user_prompt is None
 
 
+def test_pipeline_rejects_low_confidence_ocr_evidence() -> None:
+    low_confidence_chunk = replace(
+        make_chunk(),
+        ocr_quality_score=0.55,
+        ocr_quality_warning=(
+            "Low OCR confidence; verify this evidence against the source PDF."
+        ),
+    )
+    llm_provider = FakeLLMProvider()
+    pipeline = RAGPipeline(
+        FakeRetriever((low_confidence_chunk,)),
+        llm_provider,
+    )
+
+    result = pipeline.answer("How should the joint be supported?")
+
+    assert result.answer == INSUFFICIENT_EVIDENCE_ANSWER
+    assert result.abstained is True
+    assert result.evidence == ()
+    assert result.citations == ()
+    assert llm_provider.system_prompt is None
+    assert llm_provider.user_prompt is None
+
+
 def test_pipeline_abstains_when_similarity_is_below_threshold() -> None:
     weak_chunk = replace(
         make_chunk(),

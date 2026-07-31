@@ -6,6 +6,7 @@ from types import SimpleNamespace
 import sqlite3
 import pymupdf
 import pytest
+import fitz
 from fastapi.testclient import TestClient
 
 import api.main as api_main
@@ -436,6 +437,80 @@ def test_index_endpoint_indexes_uploaded_pdf(
     assert response.json()["collection_count"] == 1
     assert len(response.json()["document_id"]) == 64
     assert response.json()["elapsed_seconds"] >= 0
+
+
+def test_index_endpoint_uses_ocr_for_scanned_pdf(
+    upload_directory: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class ScannedOCRReader:
+        def readtext(
+            self,
+            _image: object,
+            detail: int,
+            paragraph: bool,
+        ) -> list[tuple[object, str, float]]:
+            assert detail == 1
+            assert paragraph is False
+            return [
+                (
+                    [],
+                    "Emergency stop maintenance procedure.",
+                    0.95,
+                )
+            ]
+
+    source_document = fitz.open()
+    source_page = source_document.new_page()
+    source_page.insert_text(
+        (72, 72),
+        "Emergency stop maintenance procedure.",
+    )
+    image_bytes = source_page.get_pixmap().tobytes("png")
+    source_document.close()
+
+    scanned_document = fitz.open()
+    scanned_page = scanned_document.new_page()
+    scanned_page.insert_image(scanned_page.rect, stream=image_bytes)
+    pdf_bytes = scanned_document.tobytes()
+    scanned_document.close()
+
+    upload_response = client.post(
+        "/documents/upload",
+        files={
+            "file": (
+                "scanned_manual.pdf",
+                pdf_bytes,
+                "application/pdf",
+            )
+        },
+    )
+
+    assert upload_response.status_code == 201
+    assert upload_response.json()["text_page_count"] == 0
+
+    monkeypatch.setattr(
+        api_main,
+        "get_ocr_reader",
+        lambda: ScannedOCRReader(),
+    )
+    monkeypatch.setattr(api_main, "EmbeddingManager", FakeEmbeddingManager)
+    monkeypatch.setattr(
+        api_main,
+        "VectorStoreManager",
+        FakeVectorStoreManager,
+    )
+
+    index_response = client.post(
+        "/documents/scanned_manual.pdf/index"
+    )
+
+    assert index_response.status_code == 200
+    assert index_response.json()["filename"] == "scanned_manual.pdf"
+    assert index_response.json()["page_count"] == 1
+    assert index_response.json()["total_chunks"] == 1
+    assert index_response.json()["added_chunks"] == 1
+    assert (upload_directory / "scanned_manual.pdf").exists()
 
 
 def test_index_endpoint_rejects_missing_document(
