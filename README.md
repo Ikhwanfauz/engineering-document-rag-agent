@@ -4,21 +4,19 @@ An AI assistant for engineering manuals and standard operating procedures (SOPs)
 
 ## Project status
 
-**Version 3B complete:** page-aware PDF ingestion, conservative layout cleaning, citation-safe chunking, local MiniLM embeddings, persistent ChromaDB indexing, citation-aware semantic retrieval, grounded local-LLM generation, and controlled insufficient-evidence abstention are implemented.
+**Version 11C is in progress:** the core Engineering Document RAG Agent is complete, including page-aware PDF ingestion, OCR fallback, persistent vector indexing, grounded question answering, controlled abstention, safety guardrails, interaction logging, user feedback, retrieval evaluation, cited maintenance-checklist generation, FastAPI, Streamlit, SQLite, and Docker deployment.
 
-Retrieved chunks must meet the calibrated minimum similarity of `0.60`. When no evidence passes the threshold, the system returns `I don't know based on the uploaded documents.`, skips LLM generation, and produces no citations.
+The system has been validated using the 126-page Universal Robots e-Series Service Manual. Retrieved evidence retains document, physical-page, PDF-label, similarity-score, and excerpt metadata.
 
-The system has been validated on the 126-page Universal Robots e-Series Service Manual. It retrieves ranked evidence, sends only that evidence to a configurable Ollama model, generates a grounded answer, and returns document, physical-page, PDF-label, and excerpt citations.
+Technical answers and maintenance checklists are generated only from retrieved evidence. When the available evidence is insufficient, the system abstains instead of producing unsupported engineering guidance. Generated maintenance checklists remain subject to human review.
 
-The initial retrieval baseline returned the correct physical page at rank 1 for all four answerable technical questions. Real answer-generation tests covered clamp disassembly, mandatory joint support, ESD-sensitive parts, and conditional seal and ring replacement.
+`qwen3:8b` is the preferred tested Ollama model. The embedding baseline remains `sentence-transformers/all-MiniLM-L6-v2` with normalized vectors and cosine similarity.
 
-`llama3.2` established the initial local baseline. `qwen3:8b` followed procedural evidence more reliably and is the preferred tested model. Broad questions requiring exhaustive synthesis across multiple pages remain a documented small-model limitation.
-
-The current automated test suite contains 56 passing tests.
+The current automated test suite contains **227 passing tests and 1 skipped test**. Ruff static checks also pass.
 
 ## Portfolio objective
 
-This project is designed to demonstrate more than a basic "chat with PDF" application. The completed system will include:
+This project demonstrates more than a basic "chat with PDF" application. The completed system includes:
 
 - PDF manual and SOP upload
 - page-aware document ingestion
@@ -37,7 +35,7 @@ This project is designed to demonstrate more than a basic "chat with PDF" applic
 
 - Python 3.11
 - LangChain for RAG orchestration
-- LangGraph for the later maintenance-checklist workflow
+- A controlled state-machine workflow for maintenance-checklist generation
 - Ollama for configurable local LLM generation
 - ChromaDB for persistent local vector storage
 - Sentence Transformers for local embeddings
@@ -92,6 +90,29 @@ python -m scripts.check_setup
 python -m pytest -q
 ```
 
+Start the FastAPI backend:
+
+```bash
+uvicorn api.main:app --reload
+```
+
+In a second terminal, start the Streamlit dashboard:
+
+```bash
+streamlit run dashboard/app.py
+```
+
+Open the dashboard at `http://localhost:8501`. Interactive API documentation is available at `http://localhost:8000/docs`.
+Alternatively, run both application services with Docker Compose:
+
+```bash
+docker compose up --build
+```
+
+Keep Ollama running on the host so the containerized API can connect through `host.docker.internal:11434`.
+
+
+
 After indexing a manual, ask a grounded question:
 
 ```bash
@@ -133,6 +154,12 @@ engineering-document-rag-agent/
 - [Semantic retrieval validation](docs/retrieval_validation.md)
 - [Grounded question answering](docs/grounded_qa.md)
 - [Don't-know handling](docs/dont_know_handling.md)
+- [Evaluation dataset](docs/evaluation_dataset.md)
+- [Retrieval evaluation](docs/retrieval_evaluation.md)
+- [Maintenance evidence retrieval](docs/maintenance_evidence_retrieval.md)
+- [Structured checklist generation](docs/structured_checklist_generation.md)
+- [Interaction logging](docs/interaction_logging.md)
+- [Configuration comparison](docs/configuration_comparison.md)
 
 ## OCR limitations
 
@@ -143,12 +170,11 @@ engineering-document-rag-agent/
 - OCR quality scores and warnings help identify uncertain text, but important engineering instructions must still be verified against the original PDF.
 
 
-## Current boundary
+## Current limitations
 
-Version 3B prevents unsupported generation when retrieved evidence does not meet the calibrated minimum similarity of `0.60`. During abstention, the pipeline skips the LLM and returns no citations.
-
-Threshold calibration accepted 6 of 7 tested answerable questions and rejected all 6 tested unanswerable questions. The conservative threshold prioritizes preventing unsupported engineering answers, although a valid low-scoring paraphrase may receive an unnecessary abstention.
-
-Version 3B does not solve the existing small-model limitation involving exhaustive synthesis across broad multi-page evidence.
-
-The next checkpoint is **Version 4A — FastAPI backend**, which will expose health, upload, indexing, question-answering, and document-management endpoints.
+- Retrieval quality depends on the uploaded document, chunking, embedding model, similarity threshold, and selected `top_k`.
+- OCR may misread complex tables, diagrams, handwriting, damaged scans, or low-resolution pages.
+- Prompt and file guardrails reduce common risks but do not replace secure production infrastructure or human review.
+- Local language-model quality depends on the selected Ollama model and available hardware. Broad multi-page synthesis may remain incomplete.
+- Docker deployment expects Ollama to remain available on the host through `host.docker.internal:11434`.
+- Generated answers and maintenance checklists must be verified against the cited source pages before engineering use.

@@ -69,7 +69,7 @@ def get_ocr_reader() -> easyocr.Reader:
 
 app = FastAPI(
     title="Engineering Document RAG Agent API",
-    version="4C",
+    version="11C",
 )
 
 
