@@ -137,11 +137,13 @@ class FakeLLMProvider:
         temperature: float,
         base_url: str,
         num_predict: int = 256,
+        response_format: object | None = None,
     ) -> None:
         self.model = model
         self.temperature = temperature
         self.base_url = base_url
         self.num_predict = num_predict
+        self.response_format = response_format
 
 
 class FakeAnsweredRAGPipeline:

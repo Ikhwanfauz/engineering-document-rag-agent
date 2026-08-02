@@ -27,6 +27,7 @@ class OllamaLLMProvider:
         base_url: str = "http://localhost:11434",
         reasoning: bool = False,
         num_predict: int = 256,
+        response_format: str | dict[str, Any] | None = None,
         client: Any | None = None,
     ) -> None:
         if num_predict <= 0:
@@ -37,12 +38,14 @@ class OllamaLLMProvider:
         self.base_url = base_url
         self.reasoning = reasoning
         self.num_predict = num_predict
+        self.response_format = response_format
         self._client = client or ChatOllama(
             model=model,
             temperature=temperature,
             base_url=base_url,
             reasoning=reasoning,
             num_predict=num_predict,
+            format=response_format,
         )
 
     def generate(self, system_prompt: str, user_prompt: str) -> str:

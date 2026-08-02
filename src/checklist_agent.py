@@ -80,6 +80,60 @@ Rules:
 - Never rename or invent an evidence identifier based on an output section name.
 """.strip()
 
+
+CHECKLIST_ITEM_RESPONSE_SCHEMA: dict[str, object] = {
+    "type": "object",
+    "properties": {
+        "text": {"type": "string"},
+        "evidence_ids": {
+            "type": "array",
+            "items": {"type": "string"},
+            "minItems": 1,
+        },
+    },
+    "required": ["text", "evidence_ids"],
+    "additionalProperties": False,
+}
+
+CHECKLIST_RESPONSE_SCHEMA: dict[str, object] = {
+    "type": "object",
+    "properties": {
+        "prerequisites": {
+            "type": "array",
+            "items": CHECKLIST_ITEM_RESPONSE_SCHEMA,
+        },
+        "tools": {
+            "type": "array",
+            "items": CHECKLIST_ITEM_RESPONSE_SCHEMA,
+        },
+        "parts": {
+            "type": "array",
+            "items": CHECKLIST_ITEM_RESPONSE_SCHEMA,
+        },
+        "safety_warnings": {
+            "type": "array",
+            "items": CHECKLIST_ITEM_RESPONSE_SCHEMA,
+        },
+        "procedure_steps": {
+            "type": "array",
+            "items": CHECKLIST_ITEM_RESPONSE_SCHEMA,
+        },
+        "review_notes": {
+            "type": "array",
+            "items": {"type": "string"},
+        },
+    },
+    "required": [
+        "prerequisites",
+        "tools",
+        "parts",
+        "safety_warnings",
+        "procedure_steps",
+        "review_notes",
+    ],
+    "additionalProperties": False,
+}
+
 CHECKLIST_ITEM_SECTIONS = (
     "prerequisites",
     "tools",
@@ -277,6 +331,11 @@ def generate_structured_checklist(
     response = llm_provider.generate(
         system_prompt=CHECKLIST_SYSTEM_PROMPT,
         user_prompt=user_prompt,
+    )
+
+    print(
+        f"RAW CHECKLIST RESPONSE: {response!r}",
+        flush=True,
     )
 
     return parse_structured_checklist(

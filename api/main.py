@@ -22,6 +22,7 @@ from database.db import (
     store_interaction,
 )
 from src.checklist_agent import (
+    CHECKLIST_RESPONSE_SCHEMA,
     ChecklistStage,
     StructuredChecklist,
     build_checklist_workflow,
@@ -786,6 +787,7 @@ def generate_maintenance_checklist(
             base_url=OLLAMA_BASE_URL,
             temperature=LLM_TEMPERATURE,
             num_predict=2048,
+            response_format=CHECKLIST_RESPONSE_SCHEMA,
         )
         workflow = build_checklist_workflow(
             retriever=retriever,
