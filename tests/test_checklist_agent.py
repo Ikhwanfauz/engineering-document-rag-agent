@@ -154,7 +154,9 @@ def make_valid_checklist_response() -> str:
     )
 
 
-def make_retrieved_chunk() -> RetrievedChunk:
+def make_retrieved_chunk(
+    similarity_score: float = 0.85,
+) -> RetrievedChunk:
     """Create one citation-aware chunk for checklist tests."""
     return RetrievedChunk(
         chunk_id="chunk-1",
@@ -164,8 +166,8 @@ def make_retrieved_chunk() -> RetrievedChunk:
         page_label="50",
         chunk_index=1,
         text="Remove the blue lid before replacing the component.",
-        distance=0.15,
-        similarity_score=0.85,
+        distance=1.0 - similarity_score,
+        similarity_score=similarity_score,
     )
 
 
@@ -193,6 +195,19 @@ def test_retrieve_categorized_evidence_preserves_chunks_and_citations() -> None:
         top_k == 3 and document_id == "manual-1"
         for _, top_k, document_id in retriever.calls
     )
+
+def test_retrieve_categorized_evidence_accepts_moderate_similarity() -> None:
+    chunk = make_retrieved_chunk(similarity_score=0.55)
+    retriever = StubEvidenceRetriever((chunk,))
+
+    categorized_evidence = retrieve_categorized_evidence(
+        retriever,
+        "Create a maintenance checklist",
+    )
+
+    assert all(evidence.chunks == (chunk,) for evidence in categorized_evidence)
+
+
 
 
 def test_validate_categorized_evidence_reports_missing_category() -> None:

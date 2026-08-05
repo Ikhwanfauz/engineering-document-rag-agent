@@ -4,8 +4,7 @@ An AI assistant for engineering manuals and standard operating procedures (SOPs)
 
 ## Project status
 
-**Version 11C is in progress:** the core Engineering Document RAG Agent is complete, including page-aware PDF ingestion, OCR fallback, persistent vector indexing, grounded question answering, controlled abstention, safety guardrails, interaction logging, user feedback, retrieval evaluation, cited maintenance-checklist generation, FastAPI, Streamlit, SQLite, and Docker deployment.
-
+**Development is complete through Version 11D. Portfolio release preparation for `v1.0.0` is in progress.** The core Engineering Document RAG Agent includes page-aware PDF ingestion, OCR fallback, persistent vector indexing, grounded question answering, controlled abstention, safety guardrails, interaction logging, user feedback, retrieval evaluation, cited maintenance-checklist generation, FastAPI, Streamlit, SQLite, and Docker deployment.
 The system has been validated using the 126-page Universal Robots e-Series Service Manual. Retrieved evidence retains document, physical-page, PDF-label, similarity-score, and excerpt metadata.
 
 Technical answers and maintenance checklists are generated only from retrieved evidence. When the available evidence is insufficient, the system abstains instead of producing unsupported engineering guidance. Generated maintenance checklists remain subject to human review.
@@ -31,6 +30,36 @@ This project demonstrates more than a basic "chat with PDF" application. The com
 - OCR fallback for scanned PDFs
 - FastAPI, Streamlit, SQLite, and Docker deployment
 
+## System architecture
+
+The system preserves page-aware evidence from document ingestion through grounded answer and checklist generation.
+
+```mermaid
+flowchart TD
+    A[PDF manual or SOP] --> B[Upload and file validation]
+    B --> C[Text extraction or OCR fallback]
+    C --> D[Page-aware chunking]
+    D --> E[Embeddings and ChromaDB]
+    Q[Question or checklist request] --> F[Guardrails]
+    F --> G[Evidence retrieval]
+    E --> G
+    G --> H[Evidence validation]
+    H --> I[Grounded answer or cited checklist]
+    I --> J[FastAPI]
+    J --> K[Streamlit dashboard]
+    J --> L[SQLite logging and feedback]
+```
+
+See the [full architecture documentation](docs/architecture.md) for component responsibilities, safety boundaries, and deployment details.
+
+## Demo
+
+### Grounded answer with page-level citations
+
+![Grounded answer with page-level citations](docs/images/grounded-answer-citations.png)
+
+The dashboard returns an evidence-grounded answer with accepted citations and excerpts from the source document.
+
 ## Technology stack
 
 - Python 3.11
@@ -50,6 +79,13 @@ The embedding baseline uses `sentence-transformers/all-MiniLM-L6-v2` with normal
 The LLM provider remains configurable. `qwen3:8b` is the preferred tested model for grounded engineering answers, while `llama3.2` remains a smaller local baseline.
 
 ## Quick start
+
+Clone the repository and enter the project directory:
+
+```bash
+git clone https://github.com/Ikhwanfauz/engineering-document-rag-agent.git
+cd engineering-document-rag-agent
+```
 
 Create and activate the Conda environment:
 
@@ -136,6 +172,9 @@ engineering-document-rag-agent/
 |-- tests/               # automated tests
 |-- docs/                # scope, architecture, roadmap, decisions, and tracking
 |-- scripts/             # setup and utility scripts
+|-- .env.example         # environment-variable template
+|-- Dockerfile           # container image definition
+|-- compose.yaml         # API and dashboard services
 |-- environment.yml
 |-- requirements.txt
 `-- README.md

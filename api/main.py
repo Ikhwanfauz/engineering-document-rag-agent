@@ -70,7 +70,7 @@ def get_ocr_reader() -> easyocr.Reader:
 
 app = FastAPI(
     title="Engineering Document RAG Agent API",
-    version="11C",
+    version="11D",
 )
 
 
@@ -355,7 +355,7 @@ def health_check() -> dict[str, str]:
     """Return the current API health status."""
     return {
         "status": "ok",
-        "version": "4E",
+        "version": "11D",
     }
 
 

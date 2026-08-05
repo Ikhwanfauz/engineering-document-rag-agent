@@ -16,6 +16,8 @@ from src.prompt_guardrails import contains_prompt_injection
 from src.rag_pipeline import DEFAULT_MINIMUM_SIMILARITY, EvidenceRetriever
 from src.retriever import RetrievedChunk
 
+CHECKLIST_MINIMUM_SIMILARITY = 0.50
+
 class EvidenceCategory(StrEnum):
     """Evidence categories required for a maintenance checklist."""
 
@@ -349,7 +351,7 @@ def retrieve_categorized_evidence(
     *,
     document_id: str | None = None,
     top_k: int = 5,
-    minimum_similarity: float = DEFAULT_MINIMUM_SIMILARITY,
+    minimum_similarity: float = CHECKLIST_MINIMUM_SIMILARITY,
 ) -> tuple[CategorizedEvidence, ...]:
     """Retrieve safe, relevant evidence separately for every category."""
     if not request.strip():

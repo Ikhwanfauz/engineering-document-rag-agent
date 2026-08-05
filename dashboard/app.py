@@ -55,6 +55,16 @@ def ask_question(question: str) -> dict[str, Any]:
     response.raise_for_status()
     return response.json()
 
+def generate_checklist(request_text: str) -> dict[str, Any]:
+    """Generate a grounded maintenance checklist through FastAPI."""
+    response = requests.post(
+        f"{API_BASE_URL}/checklists/generate",
+        json={"request": request_text},
+        timeout=300,
+    )
+    response.raise_for_status()
+    return response.json()
+
 def submit_feedback(
     interaction_id: int,
     feedback: str,
@@ -341,6 +351,123 @@ def render_question_answer() -> None:
 
     render_feedback_controls(result)
 
+def render_maintenance_checklist() -> None:
+    """Render the grounded maintenance checklist interface."""
+    st.subheader("Maintenance checklist generation")
+    st.caption(
+        "Generate a structured checklist from retrieved manual evidence. "
+        "Human review is required before use."
+    )
+
+    with st.form("checklist_form"):
+        request_text = st.text_area(
+            "Maintenance request",
+            placeholder="Example: Create a checklist for replacing the clamp seals and rings.",
+        )
+        submitted = st.form_submit_button(
+            "Generate checklist",
+            type="primary",
+        )
+
+    result = st.session_state.get("latest_checklist")
+
+    if submitted:
+        if not request_text.strip():
+            st.warning("Enter a maintenance request before submitting.")
+            return
+
+        try:
+            with st.spinner("Retrieving evidence and generating the checklist..."):
+                result = generate_checklist(request_text.strip())
+                st.session_state["latest_checklist"] = result
+
+        except requests.HTTPError as exc:
+            _, message = get_api_error(
+                exc,
+                "The maintenance checklist could not be generated.",
+            )
+            st.error(message)
+            return
+
+        except requests.RequestException:
+            st.error(
+                "Could not communicate with FastAPI. "
+                "Check that the backend and Ollama are running."
+            )
+            return
+
+    if result is None:
+        return
+
+    column_1, column_2, column_3 = st.columns(3)
+    column_1.metric("Workflow stage", result["stage"])
+    column_2.metric(
+        "Evidence sufficient",
+        "Yes" if result["evidence_sufficient"] else "No",
+    )
+    column_3.metric(
+        "Human review",
+        "Required" if result["human_review_required"] else "Not required",
+    )
+
+    checklist = result.get("checklist")
+
+    if checklist is None:
+        missing_categories = result.get("missing_evidence_categories", [])
+        st.warning(
+            "The system abstained because the retrieved evidence "
+            "was not sufficient to generate a safe checklist."
+        )
+
+        if missing_categories:
+            st.write(
+                "Missing evidence categories: "
+                + ", ".join(missing_categories)
+            )
+
+        return
+
+    if result["human_review_required"]:
+        st.warning(
+            "Human review is required before this checklist is used "
+            "for maintenance work."
+        )
+
+    sections = (
+        ("Prerequisites", "prerequisites"),
+        ("Tools", "tools"),
+        ("Parts", "parts"),
+        ("Safety warnings", "safety_warnings"),
+        ("Procedure steps", "procedure_steps"),
+    )
+
+    for heading, field_name in sections:
+        st.markdown(f"#### {heading}")
+        items = checklist.get(field_name, [])
+
+        if not items:
+            st.caption("No items were generated for this category.")
+            continue
+
+        for item_number, item in enumerate(items, start=1):
+            st.markdown(f"{item_number}. {item['text']}")
+
+            for citation in item.get("citations", []):
+                with st.expander(citation["label"]):
+                    st.caption(
+                        f"{citation['source_name']} - "
+                        f"page {citation['page_label']}"
+                    )
+                    st.write(citation["excerpt"])
+
+    review_notes = checklist.get("review_notes", [])
+
+    if review_notes:
+        st.markdown("#### Review notes")
+
+        for note in review_notes:
+            st.write(f"- {note}")
+
 def render_interaction_history() -> None:
     """Render the most recent question-and-answer interactions."""
     st.subheader("Recent question history")
@@ -431,6 +558,9 @@ def main() -> None:
 
     st.divider()
     render_question_answer()
+
+    st.divider()
+    render_maintenance_checklist()
 
     st.divider()
     render_interaction_history()
