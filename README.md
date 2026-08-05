@@ -60,6 +60,12 @@ See the [full architecture documentation](docs/architecture.md) for component re
 
 The dashboard returns an evidence-grounded answer with accepted citations and excerpts from the source document.
 
+### Evidence-grounded maintenance checklist
+
+![Evidence-grounded maintenance checklist with human review](docs/images/maintenance-checklist-human-review.png)
+
+The controlled workflow generates a cited maintenance checklist and requires human review before operational use.
+
 ## Technology stack
 
 - Python 3.11
