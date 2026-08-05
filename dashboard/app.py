@@ -59,7 +59,11 @@ def generate_checklist(request_text: str) -> dict[str, Any]:
     """Generate a grounded maintenance checklist through FastAPI."""
     response = requests.post(
         f"{API_BASE_URL}/checklists/generate",
-        json={"request": request_text},
+        json={
+            "request": request_text,
+            "top_k": 5,
+            "minimum_similarity": 0.0,
+        },
         timeout=300,
     )
     response.raise_for_status()
